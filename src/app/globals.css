@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Light, readable container for the /d/[token] page */
+.drop-viewer {
+  background: #ffffff;
+  color: #000000;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+  color-scheme: light; /* fixes native form controls inside */
+}
+.drop-viewer a { text-decoration: underline; }
+.drop-viewer pre, .drop-viewer code { background: #f3f4f6; color: #111827; }
+
+/* Make dropdowns and text fields legible across the app */
+select, input, textarea {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+option { color: #000000; }

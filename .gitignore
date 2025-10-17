@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Next.js
+.next/
+out/
+.vercel/
+.next-static/
+
+# Builds
+build/
+dist/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Local env (keep an example)
+.env*
+!.env.example
+
+# Drizzle
+.drizzle/
+
+# SQLite (if you ever spin up local sqlite for experiments)
+*.sqlite
+*.db
+
+# Editor/OS junk
+.vscode/
+.idea/
+*.swp
+*.swo
+.history/
+.DS_Store
+Thumbs.db
+
+# Docker (optional local overrides)
+docker-compose.*.local.yml
