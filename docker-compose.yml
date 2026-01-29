@@ -1,36 +1,27 @@
 # docker-compose.yml
-version: "3.9"
-services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-      POSTGRES_DB: drops
-    ports: ["5432:5432"]
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d drops"]
-      interval: 2s
-      timeout: 2s
-      retries: 20
+# Production configuration for Coolify and PaaS deployments
+#
+# This file is the default used by Coolify and other deployment platforms.
+# For local development, docker-compose.override.yml is automatically merged.
+#
+# Required environment variables (set in your PaaS dashboard):
+# - DATABASE_URL: Full postgres connection string
 
-  web:
+services:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3000}:3000"
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgres://dev:dev@db:5432/drops
-    ports: ["3005:3000"]
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: sh -c "npm run drizzle:push -- --force && npm run dev"
-
-volumes:
-  pgdata:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      SKIP_MIGRATIONS: ${SKIP_MIGRATIONS:-false}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
