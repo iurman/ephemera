@@ -23,7 +23,7 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://dev:dev@db:5432/drops
-    ports: ["3000:3000"]
+    ports: ["3005:3000"]
     depends_on:
       db:
         condition: service_healthy
