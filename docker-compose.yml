@@ -39,6 +39,11 @@ services:
     restart: unless-stopped
     ports:
       - "${HOST_PORT:-3000}:3000"
+    expose:
+      - "3000"
+    networks:
+      - default
+      - coolify
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER:-ephemera}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ephemera}
@@ -55,3 +60,8 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  default:
+  coolify:
+    external: true
