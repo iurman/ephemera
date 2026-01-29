@@ -52,10 +52,12 @@ services:
       - "traefik.http.routers.ephemera.entrypoints=https"
       - "traefik.http.routers.ephemera.tls=true"
       - "traefik.http.routers.ephemera.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ephemera.service=ephemera"
       # HTTP router with redirect to HTTPS
       - "traefik.http.routers.ephemera-http.rule=Host(`ephemera.isaacurman.com`)"
       - "traefik.http.routers.ephemera-http.entrypoints=http"
       - "traefik.http.routers.ephemera-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.ephemera-http.service=ephemera"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
       # Service configuration
