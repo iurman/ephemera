@@ -2,43 +2,60 @@
 
 This guide covers deploying Ephemera using Docker, with specific instructions for Coolify.
 
-## Quick Start with Docker Compose
+## Docker Compose Files
 
-### Production (with bundled PostgreSQL)
+| File | Purpose |
+|------|---------|
+| `docker-compose.yml` | Production config for Coolify/PaaS (external database) |
+| `docker-compose.override.yml` | Local development overrides (auto-merged) |
+| `docker-compose.production.yml` | Self-hosted with bundled PostgreSQL |
+
+## Quick Start
+
+### Local Development
 
 ```bash
-# Set required environment variables
-export POSTGRES_PASSWORD=your-secure-password
+# Start app + local database (uses override file automatically)
+docker compose up
 
-# Start the stack
-docker compose -f docker-compose.production.yml up -d
+# App available at http://localhost:3005
 ```
 
-### Production (with external database)
+### Production with External Database
 
 ```bash
 # Set your database URL
 export DATABASE_URL=postgres://user:pass@host:5432/dbname
 
 # Start the app only
-docker compose -f docker-compose.coolify.yml up -d
+docker compose up -d
+```
+
+### Self-Hosted with Bundled PostgreSQL
+
+```bash
+# Set required password
+export POSTGRES_PASSWORD=your-secure-password
+
+# Start the full stack
+docker compose -f docker-compose.production.yml up -d
 ```
 
 ## Deploying to Coolify
 
-### Option 1: Using Coolify's Built-in PostgreSQL
+### Option 1: Using Coolify's Built-in PostgreSQL (Recommended)
 
 1. **Create a new Service** in Coolify
 2. **Select "Docker Compose"** as the deployment method
 3. **Connect your Git repository**
-4. **Set the compose file** to `docker-compose.coolify.yml`
+4. **Leave compose file as default** (`docker-compose.yml`)
 5. **Add a PostgreSQL database** from Coolify's database section
 6. **Configure Environment Variables**:
    - `DATABASE_URL`: Use the connection string from Coolify's PostgreSQL service
 
 7. **Deploy!**
 
-### Option 2: All-in-One Stack
+### Option 2: All-in-One Stack (Bundled Database)
 
 1. **Create a new Service** in Coolify
 2. **Select "Docker Compose"** as the deployment method
@@ -67,7 +84,7 @@ docker compose -f docker-compose.coolify.yml up -d
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | Yes | - | PostgreSQL connection string |
 | `NODE_ENV` | No | `production` | Environment mode |
-| `HOST_PORT` | No | `3005` | External port to expose (internal is always 3000) |
+| `HOST_PORT` | No | `3000` | External port to expose |
 | `SKIP_MIGRATIONS` | No | `false` | Skip database migrations on startup |
 
 ### Development Only
@@ -117,9 +134,18 @@ SKIP_MIGRATIONS=true
 
 ### Health check failing
 
-1. Wait for the start period (30s)
+1. Wait for the start period (40s)
 2. Check application logs for errors
 3. Verify the `/api/ping` endpoint is accessible
+
+### 404 Error on Deployment
+
+If you see a 404 error after deploying to Coolify:
+
+1. Ensure you're using the default `docker-compose.yml` file
+2. Verify `DATABASE_URL` is set correctly in Coolify's environment variables
+3. Check that the database is accessible from the app container
+4. Review logs: `docker compose logs app`
 
 ## Building Locally
 
@@ -127,8 +153,8 @@ SKIP_MIGRATIONS=true
 # Build the Docker image
 docker build -t ephemera .
 
-# Run with external database (exposed on port 3005)
-docker run -p 3005:3000 -e DATABASE_URL=postgres://... ephemera
+# Run with external database
+docker run -p 3000:3000 -e DATABASE_URL=postgres://... ephemera
 ```
 
 ## Architecture
