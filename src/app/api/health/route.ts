@@ -1,7 +1,7 @@
 // src/app/api/health/route.ts
 // Comprehensive health check endpoint for debugging deployments
 
-import { db } from "@/server/db";
+import { db } from "@/server/db/client";
 import { sql } from "drizzle-orm";
 
 interface HealthStatus {

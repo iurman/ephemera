@@ -9,11 +9,8 @@ const nextConfig = {
   // Enable strict mode for better debugging
   reactStrictMode: true,
 
-  // Experimental features
-  experimental: {
-    // Optimize server components
-    serverComponentsExternalPackages: ["drizzle-orm", "pg"],
-  },
+  // External packages for server components (moved from experimental in Next.js 15)
+  serverExternalPackages: ["drizzle-orm", "pg"],
 };
 
 export default nextConfig;
