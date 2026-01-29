@@ -45,6 +45,22 @@ services:
     networks:
       - default
       - coolify
+    labels:
+      - "traefik.enable=true"
+      # HTTPS router
+      - "traefik.http.routers.ephemera.rule=Host(`ephemera.isaacurman.com`)"
+      - "traefik.http.routers.ephemera.entrypoints=https"
+      - "traefik.http.routers.ephemera.tls=true"
+      - "traefik.http.routers.ephemera.tls.certresolver=letsencrypt"
+      # HTTP router with redirect to HTTPS
+      - "traefik.http.routers.ephemera-http.rule=Host(`ephemera.isaacurman.com`)"
+      - "traefik.http.routers.ephemera-http.entrypoints=http"
+      - "traefik.http.routers.ephemera-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      # Service configuration
+      - "traefik.http.services.ephemera.loadbalancer.server.port=3000"
+      - "traefik.docker.network=coolify"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER:-ephemera}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ephemera}
