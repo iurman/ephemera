@@ -67,7 +67,7 @@ docker compose -f docker-compose.coolify.yml up -d
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | Yes | - | PostgreSQL connection string |
 | `NODE_ENV` | No | `production` | Environment mode |
-| `PORT` | No | `3000` | Port to listen on |
+| `HOST_PORT` | No | `3005` | External port to expose (internal is always 3000) |
 | `SKIP_MIGRATIONS` | No | `false` | Skip database migrations on startup |
 
 ### Development Only
@@ -127,8 +127,8 @@ SKIP_MIGRATIONS=true
 # Build the Docker image
 docker build -t ephemera .
 
-# Run with external database
-docker run -p 3000:3000 -e DATABASE_URL=postgres://... ephemera
+# Run with external database (exposed on port 3005)
+docker run -p 3005:3000 -e DATABASE_URL=postgres://... ephemera
 ```
 
 ## Architecture
