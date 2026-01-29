@@ -5,12 +5,12 @@ import { sql } from "drizzle-orm";
 export const drops = pgTable(
   "drops",
   {
-    id: varchar("id", 36).primaryKey(),
-    token: varchar("token", 64).notNull().unique(),
+    id: varchar("id", { length: 36 }).primaryKey(),
+    token: varchar("token", { length: 64 }).notNull().unique(),
 
     // who created it + kind
-    ownerId: varchar("owner_id", 36),
-    kind: varchar("kind", 16).notNull().default("text"), // "text" | "url"
+    ownerId: varchar("owner_id", { length: 36 }),
+    kind: varchar("kind", { length: 16 }).notNull().default("text"), // "text" | "url"
 
     title: text("title").notNull(),
     body: text("body").notNull(), // text content or URL
@@ -38,8 +38,8 @@ export const drops = pgTable(
 export const views = pgTable(
   "views",
   {
-    id: varchar("id", 36).primaryKey(),
-    dropId: varchar("drop_id", 36).notNull().references(() => drops.id),
+    id: varchar("id", { length: 36 }).primaryKey(),
+    dropId: varchar("drop_id", { length: 36 }).notNull().references(() => drops.id),
     viewedAt: timestamp("viewed_at").notNull().default(sql`now()`),
     ua: text("ua"),
     ip: text("ip"),
@@ -52,19 +52,19 @@ export const views = pgTable(
 
 /* ---------- Users / Sessions / Invites ---------- */
 export const users = pgTable("users", {
-  id: varchar("id", 36).primaryKey(),
+  id: varchar("id", { length: 36 }).primaryKey(),
   email: text("email").unique(),
   displayName: text("display_name").notNull(),
   role: text("role").notNull().default("user"), // "owner" | "admin" | "user"
-  passwordHash: text("password_hash"),          // <-- NEW (nullable for existing rows / owner bootstrap)
+  passwordHash: text("password_hash"),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 
 export const sessions = pgTable(
   "sessions",
   {
-    id: varchar("id", 36).primaryKey(),
-    userId: varchar("user_id", 36).notNull().references(() => users.id),
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
     createdAt: timestamp("created_at").notNull().default(sql`now()`),
     expiresAt: timestamp("expires_at").notNull(),
   },
@@ -76,12 +76,12 @@ export const sessions = pgTable(
 export const invites = pgTable(
   "invites",
   {
-    id: varchar("id", 36).primaryKey(),
-    tokenHash: varchar("token_hash", 128).notNull().unique(),
-    createdBy: varchar("created_by", 36).notNull().references(() => users.id),
+    id: varchar("id", { length: 36 }).primaryKey(),
+    tokenHash: varchar("token_hash", { length: 128 }).notNull().unique(),
+    createdBy: varchar("created_by", { length: 36 }).notNull().references(() => users.id),
     createdAt: timestamp("created_at").notNull().default(sql`now()`),
     expiresAt: timestamp("expires_at").notNull(),
-    usedBy: varchar("used_by", 36),
+    usedBy: varchar("used_by", { length: 36 }),
     usedAt: timestamp("used_at"),
     maxUses: integer("max_uses").notNull().default(1),
   },

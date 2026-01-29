@@ -1,71 +1,123 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Button, Input } from "@/components/ui";
 
 export default function DevLoginPage() {
-  const [u, setU] = useState("");
-  const [p, setP] = useState("");
-  const [err, setErr] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isProduction, setIsProduction] = useState(false);
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent) {
+  // Check if in production (client-side check)
+  useEffect(() => {
+    // In production builds, this will typically be 'production'
+    // but we can't reliably check NODE_ENV on client, so we make a test request
+    fetch("/api/auth/dev-login", { method: "POST", body: "{}" })
+      .then((r) => {
+        if (r.status === 403) {
+          setIsProduction(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null);
+    setError(null);
     setLoading(true);
+
     try {
-      const r = await fetch("/api/auth/dev-login", {
+      const response = await fetch("/api/auth/dev-login", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: u, password: p }),
+        body: JSON.stringify({ username, password }),
       });
-      if (!r.ok) {
-        const text = await r.text().catch(() => "Login failed");
-        setErr(text || "Login failed");
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "Login failed");
+        setError(text || "Login failed");
       } else {
         router.replace("/dashboard");
         router.refresh();
       }
+    } catch (err) {
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
+  if (isProduction) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white p-6">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold mb-2">Not Available</h1>
+          <p className="text-white/60">
+            Dev login is disabled in production.{" "}
+            <a href="/dashboard" className="underline hover:text-white">
+              Go to dashboard
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen grid place-items-center bg-black text-white p-6">
+    <div className="min-h-screen flex items-center justify-center bg-black text-white p-6">
       <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm bg-white/5 border border-white/10 rounded-2xl p-6 space-y-3"
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm p-6 rounded-2xl border border-white/10 bg-white/[0.02] space-y-4"
       >
-        <h1 className="text-xl font-semibold">Dev login</h1>
-        <p className="text-sm text-white/60">Enabled only in development.</p>
+        <div>
+          <h1 className="text-xl font-semibold">Dev Login</h1>
+          <p className="text-sm text-white/50 mt-1">
+            Development only. Use DEV_ADMIN_USER and DEV_ADMIN_PASS env vars.
+          </p>
+        </div>
 
-        <input
-          className="w-full rounded border border-white/10 bg-black/40 p-2"
+        <Input
           placeholder="Username"
-          value={u}
-          onChange={(e) => setU(e.target.value)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           autoFocus
+          autoComplete="username"
         />
-        <input
+
+        <Input
           type="password"
-          className="w-full rounded border border-white/10 bg-black/40 p-2"
           placeholder="Password"
-          value={p}
-          onChange={(e) => setP(e.target.value)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
         />
 
-        {err && <div className="text-red-400 text-sm">{err}</div>}
+        {error && (
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
 
-        <button
+        <Button
           type="submit"
-          disabled={loading || !u || !p}
-          className="w-full rounded bg-white text-black py-2 disabled:opacity-50"
+          variant="primary"
+          className="w-full"
+          loading={loading}
+          disabled={!username || !password}
         >
-          {loading ? "Signing in…" : "Sign in"}
-        </button>
+          Sign In
+        </Button>
+
+        <p className="text-xs text-center text-white/40">
+          <a href="/dashboard" className="hover:text-white/60">
+            Back to Dashboard
+          </a>
+        </p>
       </form>
     </div>
   );
