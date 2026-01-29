@@ -48,7 +48,8 @@ export async function POST(req: Request) {
       id: crypto.randomUUID(),
       displayName,
       role: "owner" as const,
-      email: null as any, // if your schema has email nullable
+      email: null,
+      passwordHash: null,
       createdAt: new Date(),
     };
     await db.insert(users).values({

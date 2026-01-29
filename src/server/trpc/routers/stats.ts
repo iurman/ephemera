@@ -1,94 +1,216 @@
-// src/server/trpc/routers/stats.ts
 import { z } from "zod";
-import { router, publicProcedure } from "../index";
+import { TRPCError } from "@trpc/server";
+import { router, protectedProcedure } from "../index";
 import { db } from "../../db/client";
-import { drops } from "../../db/schema";
-import { sql } from "drizzle-orm";
+import { drops, views } from "../../db/schema";
+import { eq, sql, and, gte, desc, count } from "drizzle-orm";
+
+// Constants
+const MAX_WINDOW_MINUTES = 24 * 60; // 24 hours
+const DEFAULT_WINDOW_MINUTES = 60;
+
+// Input schemas
+const forDropSchema = z.object({
+  dropId: z.string().uuid(),
+  windowMinutes: z.number().int().min(1).max(MAX_WINDOW_MINUTES).default(DEFAULT_WINDOW_MINUTES),
+});
+
+const overviewSchema = z.object({
+  windowMinutes: z.number().int().min(1).max(MAX_WINDOW_MINUTES).default(DEFAULT_WINDOW_MINUTES),
+});
 
 export const statsRouter = router({
-  // Per-drop stats for a recent window (e.g., last 60 minutes)
-  forDrop: publicProcedure.input(
-    z.object({ dropId: z.string(), windowMinutes: z.number().int().min(1).max(24*60).default(60) })
-  ).query(async ({ input }) => {
-    const { dropId, windowMinutes } = input;
+  // Get detailed stats for a specific drop
+  forDrop: protectedProcedure
+    .input(forDropSchema)
+    .query(async ({ input, ctx }) => {
+      const { dropId, windowMinutes } = input;
+      const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
 
-    // 1) Pull base fields
-    const [d] = await db.execute(sql`
-      SELECT id, created_at, first_viewed_at, exhausted_at, max_views, used_views
-      FROM drops WHERE id = ${dropId} LIMIT 1
-    `);
+      // Fetch drop details with access check
+      const [drop] = await db
+        .select({
+          id: drops.id,
+          ownerId: drops.ownerId,
+          createdAt: drops.createdAt,
+          firstViewedAt: drops.firstViewedAt,
+          exhaustedAt: drops.exhaustedAt,
+          maxViews: drops.maxViews,
+          usedViews: drops.usedViews,
+        })
+        .from(drops)
+        .where(eq(drops.id, dropId))
+        .limit(1);
 
-    // 2) Clicks per minute over the window (zero-filled)
-    const buckets = await db.execute(sql`
-      WITH series AS (
-        SELECT generate_series(
-          date_trunc('minute', now() - interval '${windowMinutes} minutes'),
-          date_trunc('minute', now()),
-          interval '1 minute'
-        ) AS bucket
-      ),
-      counts AS (
-        SELECT date_trunc('minute', viewed_at) AS bucket, count(*)::int AS c
-        FROM views
-        WHERE drop_id = ${dropId}
-          AND viewed_at >= now() - interval '${windowMinutes} minutes'
-        GROUP BY 1
-      )
-      SELECT series.bucket, COALESCE(counts.c, 0) AS count
-      FROM series
-      LEFT JOIN counts ON series.bucket = counts.bucket
-      ORDER BY series.bucket ASC
-    `);
+      if (!drop) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Drop not found",
+        });
+      }
 
-    // 3) Unique IPs in window (optional)
-    const uniqueIps = await db.execute(sql`
-      SELECT COUNT(DISTINCT ip) AS n FROM views
-      WHERE drop_id = ${dropId}
-        AND viewed_at >= now() - interval '${windowMinutes} minutes'
-        AND ip IS NOT NULL
-    `);
+      // Check access
+      const isAdminOrOwner = ctx.user.role === "owner" || ctx.user.role === "admin";
+      if (!isAdminOrOwner && drop.ownerId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only view stats for your own drops",
+        });
+      }
 
-    // 4) Derived metrics
-    const createdAt = d?.created_at as Date | null;
-    const firstViewedAt = d?.first_viewed_at as Date | null;
-    const exhaustedAt = d?.exhausted_at as Date | null;
+      // Get views in the time window
+      const viewsInWindow = await db
+        .select({
+          viewedAt: views.viewedAt,
+          ip: views.ip,
+        })
+        .from(views)
+        .where(
+          and(
+            eq(views.dropId, dropId),
+            gte(views.viewedAt, windowStart)
+          )
+        )
+        .orderBy(desc(views.viewedAt));
 
-    const timeToFirstSec = createdAt && firstViewedAt ? Math.round((+firstViewedAt - +createdAt)/1000) : null;
-    const timeToExhaustSec = createdAt && exhaustedAt ? Math.round((+exhaustedAt - +createdAt)/1000) : null;
+      // Calculate per-minute buckets
+      const bucketMap = new Map<string, number>();
+      const uniqueIps = new Set<string>();
 
-    const perMin = (buckets as any[]).map(b => ({ t: b.bucket, c: Number(b.count) }));
-    const peakRPM = perMin.reduce((m, x) => Math.max(m, x.c), 0);
-    const totalInWindow = perMin.reduce((s, x) => s + x.c, 0);
+      for (const view of viewsInWindow) {
+        // Per-minute bucket
+        const bucketKey = new Date(view.viewedAt)
+          .toISOString()
+          .slice(0, 16); // YYYY-MM-DDTHH:MM
+        bucketMap.set(bucketKey, (bucketMap.get(bucketKey) ?? 0) + 1);
 
-    return {
-      dropId,
-      createdAt,
-      firstViewedAt,
-      exhaustedAt,
-      maxViews: d?.max_views ?? 0,
-      usedViews: d?.used_views ?? 0,
-      timeToFirstSec,
-      timeToExhaustSec,
-      peakRPM,
-      totalInWindow,
-      uniqueIps: Number((uniqueIps as any[])[0]?.n ?? 0),
-      perMinute: perMin, // array of { t: Date, c: number }
-    };
-  }),
+        // Unique IPs
+        if (view.ip) {
+          uniqueIps.add(view.ip);
+        }
+      }
 
-  // Overview: fast counts across all drops in window
-  overview: publicProcedure.input(
-    z.object({ windowMinutes: z.number().int().min(1).max(24*60).default(60) })
-  ).query(async ({ input }) => {
-    const { windowMinutes } = input;
-    const [row] = await db.execute(sql`
-      SELECT
-        COUNT(*)::int AS totalDrops,
-        SUM(CASE WHEN exhausted_at IS NOT NULL THEN 1 ELSE 0 END)::int AS exhaustedDrops,
-        SUM(used_views)::int AS totalViews
-      FROM drops
-      WHERE created_at >= now() - interval '${windowMinutes} minutes'
-    `);
-    return row;
-  }),
+      // Convert to array sorted by time
+      const perMinute = Array.from(bucketMap.entries())
+        .map(([t, c]) => ({ t: new Date(t), c }))
+        .sort((a, b) => a.t.getTime() - b.t.getTime());
+
+      // Calculate derived metrics
+      const peakRPM = perMinute.reduce((max, x) => Math.max(max, x.c), 0);
+      const totalInWindow = viewsInWindow.length;
+
+      const timeToFirstSec =
+        drop.createdAt && drop.firstViewedAt
+          ? Math.round((drop.firstViewedAt.getTime() - drop.createdAt.getTime()) / 1000)
+          : null;
+
+      const timeToExhaustSec =
+        drop.createdAt && drop.exhaustedAt
+          ? Math.round((drop.exhaustedAt.getTime() - drop.createdAt.getTime()) / 1000)
+          : null;
+
+      return {
+        dropId,
+        createdAt: drop.createdAt,
+        firstViewedAt: drop.firstViewedAt,
+        exhaustedAt: drop.exhaustedAt,
+        maxViews: drop.maxViews,
+        usedViews: drop.usedViews,
+        timeToFirstSec,
+        timeToExhaustSec,
+        peakRPM,
+        totalInWindow,
+        uniqueIps: uniqueIps.size,
+        perMinute,
+      };
+    }),
+
+  // Get overview stats across all drops
+  overview: protectedProcedure
+    .input(overviewSchema)
+    .query(async ({ input, ctx }) => {
+      const { windowMinutes } = input;
+      const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
+
+      // Build conditions based on user role
+      const isAdminOrOwner = ctx.user.role === "owner" || ctx.user.role === "admin";
+
+      // Get aggregated stats
+      const baseCondition = gte(drops.createdAt, windowStart);
+      const userCondition = isAdminOrOwner ? undefined : eq(drops.ownerId, ctx.user.id);
+      const whereClause = userCondition ? and(baseCondition, userCondition) : baseCondition;
+
+      const [stats] = await db
+        .select({
+          totalDrops: count(),
+          exhaustedDrops: sql<number>`SUM(CASE WHEN ${drops.exhaustedAt} IS NOT NULL THEN 1 ELSE 0 END)::int`,
+          totalViews: sql<number>`SUM(${drops.usedViews})::int`,
+          activeDrops: sql<number>`SUM(CASE WHEN ${drops.revokedAt} IS NULL AND ${drops.expiresAt} > NOW() AND ${drops.usedViews} < ${drops.maxViews} THEN 1 ELSE 0 END)::int`,
+        })
+        .from(drops)
+        .where(whereClause);
+
+      // Get recent views count in window
+      const [viewStats] = await db
+        .select({
+          totalViews: count(),
+        })
+        .from(views)
+        .where(gte(views.viewedAt, windowStart));
+
+      return {
+        totalDrops: stats?.totalDrops ?? 0,
+        exhaustedDrops: stats?.exhaustedDrops ?? 0,
+        activeDrops: stats?.activeDrops ?? 0,
+        totalLifetimeViews: stats?.totalViews ?? 0,
+        viewsInWindow: viewStats?.totalViews ?? 0,
+        windowMinutes,
+      };
+    }),
+
+  // Get recent views for a drop (for live feed)
+  recentViews: protectedProcedure
+    .input(z.object({
+      dropId: z.string().uuid(),
+      limit: z.number().int().min(1).max(100).default(20),
+    }))
+    .query(async ({ input, ctx }) => {
+      const { dropId, limit } = input;
+
+      // Check access
+      const [drop] = await db
+        .select({ ownerId: drops.ownerId })
+        .from(drops)
+        .where(eq(drops.id, dropId))
+        .limit(1);
+
+      if (!drop) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Drop not found",
+        });
+      }
+
+      const isAdminOrOwner = ctx.user.role === "owner" || ctx.user.role === "admin";
+      if (!isAdminOrOwner && drop.ownerId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only view stats for your own drops",
+        });
+      }
+
+      const recentViews = await db
+        .select({
+          id: views.id,
+          viewedAt: views.viewedAt,
+          ua: views.ua,
+          ip: views.ip,
+        })
+        .from(views)
+        .where(eq(views.dropId, dropId))
+        .orderBy(desc(views.viewedAt))
+        .limit(limit);
+
+      return { views: recentViews };
+    }),
 });
