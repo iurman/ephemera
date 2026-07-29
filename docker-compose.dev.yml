@@ -1,0 +1,22 @@
+# Local development database only.
+# Usage: docker compose -f docker-compose.dev.yml up -d
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ephemera_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - ephemera_dev_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  ephemera_dev_pg:
