@@ -34,7 +34,7 @@ function ShareResultBody({ drop, onClose }: { drop: CreatedDrop; onClose: () => 
       const dataUrl = await QRCode.toDataURL(drop.shareUrl, {
         width: 220,
         margin: 1,
-        color: { dark: "#0c0b0a", light: "#f5f2ee" },
+        color: { dark: "#000000", light: "#ffffff" },
       });
       setQr(dataUrl);
     } finally {
@@ -49,13 +49,13 @@ function ShareResultBody({ drop, onClose }: { drop: CreatedDrop; onClose: () => 
       </div>
 
       {drop.encrypted && !drop.passwordProtected && (
-        <p className="rounded-lg bg-ember-soft px-3 py-2 text-xs leading-relaxed text-ember-bright">
+        <p className="rounded-lg bg-accent-soft px-3 py-2 text-xs leading-relaxed text-accent-bright">
           The decryption key lives in this link&apos;s <code>#fragment</code> and was never sent to
           the server. This is the only time you&apos;ll see it — copy it now.
         </p>
       )}
       {drop.passwordProtected && (
-        <p className="rounded-lg bg-ember-soft px-3 py-2 text-xs leading-relaxed text-ember-bright">
+        <p className="rounded-lg bg-accent-soft px-3 py-2 text-xs leading-relaxed text-accent-bright">
           The recipient needs the passphrase to decrypt. Share it over a different channel than the
           link.
         </p>

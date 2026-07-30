@@ -77,7 +77,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="py-16 text-center">
         <p className="text-ink-muted">Drop not found (or you don&apos;t have access).</p>
-        <Link href="/dashboard" className="mt-4 inline-block text-sm text-ember-bright underline">
+        <Link href="/dashboard" className="mt-4 inline-block text-sm text-accent-bright underline">
           Back to dashboard
         </Link>
       </div>
@@ -199,7 +199,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <span
                   className={
                     t.at
-                      ? "block size-2 rounded-full bg-ember"
+                      ? "block size-2 rounded-full bg-accent"
                       : "block size-2 rounded-full bg-line"
                   }
                 />

@@ -131,7 +131,7 @@ export default function AdminPage() {
                   </td>
                   <td className="py-3 pr-4">
                     {u.role === "owner" ? (
-                      <span className="text-xs font-medium text-ember-bright">owner</span>
+                      <span className="text-xs font-medium text-accent-bright">owner</span>
                     ) : isOwner ? (
                       <Select
                         value={u.role}

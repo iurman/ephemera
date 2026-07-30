@@ -12,7 +12,7 @@ export default function SignupPage() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl">
         <Link href="/" className="mb-6 flex items-center gap-2 font-semibold tracking-tight">
-          <span className="block size-2.5 animate-ember-pulse rounded-full bg-ember" />
+          <span className="block size-2.5 animate-accent-pulse rounded-full bg-accent" />
           ephemera
         </Link>
         <Suspense fallback={<Skeleton className="h-64" />}>

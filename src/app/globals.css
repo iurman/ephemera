@@ -1,21 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  /* Ember & ash — warm near-black with a validated ember accent. */
-  --color-bg: #0c0b0a;
-  --color-surface: #141210;
-  --color-surface-2: #1d1a17;
-  --color-line: rgba(245, 242, 238, 0.09);
-  --color-line-strong: rgba(245, 242, 238, 0.16);
+  /* Monochrome — true black, true white, nothing warm. Status colors are
+     the only chroma on the page, and they're reserved for state. */
+  --color-bg: #000000;
+  --color-surface: #0e0e0e;
+  --color-surface-2: #181818;
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-line-strong: rgba(255, 255, 255, 0.18);
 
-  --color-ink: #f5f2ee;
-  --color-ink-muted: rgba(245, 242, 238, 0.62);
-  --color-ink-faint: rgba(245, 242, 238, 0.38);
+  --color-ink: #ffffff;
+  --color-ink-muted: rgba(255, 255, 255, 0.64);
+  --color-ink-faint: rgba(255, 255, 255, 0.4);
 
-  /* Chart/data accent (#e8681a validated: L 0.61, ≥3:1 on --color-surface). */
-  --color-ember: #e8681a;
-  --color-ember-bright: #f97b2c;
-  --color-ember-soft: rgba(232, 104, 26, 0.14);
+  /* Accent is white: primary actions invert (white surface, black text). */
+  --color-accent: #ffffff;
+  --color-accent-bright: #ffffff;
+  --color-accent-soft: rgba(255, 255, 255, 0.12);
 
   --color-ok: #34d399;
   --color-ok-soft: rgba(52, 211, 153, 0.14);
@@ -29,7 +30,7 @@
 
   --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-dissolve-in: dissolve-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-ember-pulse: ember-pulse 2.4s ease-in-out infinite;
+  --animate-accent-pulse: accent-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes fade-up {
@@ -56,7 +57,7 @@
   }
 }
 
-@keyframes ember-pulse {
+@keyframes accent-pulse {
   0%,
   100% {
     opacity: 0.55;
@@ -86,15 +87,15 @@ body {
 }
 
 ::selection {
-  background: var(--color-ember-soft);
-  color: var(--color-ember-bright);
+  background: var(--color-ink);
+  color: var(--color-bg);
 }
 
-/* Subtle warm vignette behind everything. */
+/* Subtle monochrome vignette behind everything. */
 .bg-aurora {
   background:
-    radial-gradient(60rem 40rem at 85% -10%, rgba(232, 104, 26, 0.07), transparent 60%),
-    radial-gradient(50rem 35rem at -10% 110%, rgba(232, 104, 26, 0.05), transparent 60%),
+    radial-gradient(60rem 40rem at 85% -10%, rgba(255, 255, 255, 0.045), transparent 60%),
+    radial-gradient(50rem 35rem at -10% 110%, rgba(255, 255, 255, 0.03), transparent 60%),
     var(--color-bg);
 }
 
@@ -123,7 +124,7 @@ body {
   margin: 0.75em 0;
 }
 .drop-prose a {
-  color: var(--color-ember-bright);
+  color: var(--color-accent-bright);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -186,7 +187,7 @@ body {
   text-align: left;
 }
 
-/* highlight.js — minimal ember-tinted dark theme. */
+/* highlight.js — minimal accent-tinted dark theme. */
 .hljs {
   color: var(--color-ink);
 }
@@ -198,24 +199,25 @@ body {
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-built_in {
-  color: #f2a06b;
+  color: #ffffff;
+  font-weight: 600;
 }
 .hljs-string,
 .hljs-attr,
 .hljs-template-string {
-  color: #a3d9a5;
+  color: rgba(255, 255, 255, 0.78);
 }
 .hljs-number,
 .hljs-literal {
-  color: #8ecbe8;
+  color: rgba(255, 255, 255, 0.78);
 }
 .hljs-title,
 .hljs-name,
 .hljs-function {
-  color: #f5d76e;
+  color: #ffffff;
 }
 .hljs-variable,
 .hljs-template-variable,
 .hljs-type {
-  color: #e8a1a1;
+  color: rgba(255, 255, 255, 0.66);
 }

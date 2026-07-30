@@ -113,14 +113,14 @@ await page.goto(`${BASE}/dashboard`);
 await page.waitForTimeout(1200);
 await shot("dashboard");
 
-// Drop detail with sparkline
+// Drop detail with sparkline (scope to the runbook card, which has views)
 await page.goto(`${BASE}/dashboard`);
 await page
-  .locator("div", { hasText: "prod incident runbook" })
-  .locator("a", { hasText: "Details" })
-  .first()
+  .locator("div.rounded-2xl", { hasText: "prod incident runbook" })
+  .getByRole("link", { name: "Details" })
   .click();
-await page.getByText("Views per minute").waitFor();
+await page.getByRole("heading", { name: "Views per minute" }).waitFor();
+await page.waitForTimeout(1200);
 await shot("drop-detail");
 
 // Reveal gate + revealed content (recipient's perspective)

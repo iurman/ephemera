@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <span className="block size-2.5 animate-ember-pulse rounded-full bg-ember" />
+              <span className="block size-2.5 animate-accent-pulse rounded-full bg-accent" />
               ephemera
             </Link>
             <nav className="flex items-center gap-1">

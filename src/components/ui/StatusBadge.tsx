@@ -26,7 +26,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       )}
     >
       {status === "active" && (
-        <span className="mr-1.5 size-1.5 animate-ember-pulse rounded-full bg-current" />
+        <span className="mr-1.5 size-1.5 animate-accent-pulse rounded-full bg-current" />
       )}
       {getStatusLabel(status)}
     </span>

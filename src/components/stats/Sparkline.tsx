@@ -16,7 +16,7 @@ interface SparklineProps {
 }
 
 /**
- * Single-series views-per-minute line. One hue (ember, validated on this
+ * Single-series views-per-minute line. One hue (accent, validated on this
  * surface), 2px stroke, recessive axis, hover tooltip on the nearest bucket.
  */
 export function Sparkline({ data, windowMinutes, endMs, height = 120 }: SparklineProps) {
@@ -89,15 +89,15 @@ export function Sparkline({ data, windowMinutes, endMs, height = 120 }: Sparklin
           y2={height - pad.bottom}
           stroke="var(--color-line)"
         />
-        <path d={area} fill="var(--color-ember)" opacity={0.12} />
-        <path d={path} fill="none" stroke="var(--color-ember)" strokeWidth={2} />
+        <path d={area} fill="var(--color-accent)" opacity={0.12} />
+        <path d={path} fill="none" stroke="var(--color-accent)" strokeWidth={2} />
         {points.map((p, i) => (
           <circle
             key={i}
             cx={p.x}
             cy={p.y}
             r={hover?.x === p.x ? 4 : 2.5}
-            fill="var(--color-ember)"
+            fill="var(--color-accent)"
           />
         ))}
         {maxPoint && (

@@ -133,8 +133,8 @@ export function RevealClient(props: RevealClientProps) {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 text-center shadow-2xl">
-        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-ember-soft">
-          <span className="block size-3.5 animate-ember-pulse rounded-full bg-ember" />
+        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-accent-soft">
+          <span className="block size-3.5 animate-accent-pulse rounded-full bg-accent" />
         </div>
 
         {phase === "gone" ? (
@@ -250,7 +250,7 @@ function RevealedView({ content }: { content: RevealedContent }) {
         <div className="animate-dissolve-in">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-xs text-ink-faint">
-              <span className="block size-2 rounded-full bg-ember" />
+              <span className="block size-2 rounded-full bg-accent" />
               {remaining === 0
                 ? "This was the last view — the drop is now ash."
                 : `${remaining} view${remaining === 1 ? "" : "s"} remaining.`}
@@ -411,7 +411,7 @@ function FileContent({
       </p>
       <button
         onClick={download}
-        className="mt-5 inline-block rounded-xl bg-ember px-6 py-2.5 font-medium text-white transition-colors hover:bg-ember-bright"
+        className="mt-5 inline-block rounded-xl bg-accent px-6 py-2.5 font-medium text-black transition-colors hover:bg-accent-bright"
       >
         Download
       </button>

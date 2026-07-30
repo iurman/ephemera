@@ -24,8 +24,8 @@ export default function Home() {
     <main className="flex min-h-screen flex-col">
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 py-20 text-center">
         <div className="animate-fade-up">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-ember-soft px-3 py-1 text-xs font-medium text-ember-bright">
-            <span className="size-1.5 animate-ember-pulse rounded-full bg-ember" />
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-bright">
+            <span className="size-1.5 animate-accent-pulse rounded-full bg-accent" />
             end-to-end encrypted · self-hosted
           </div>
           <h1 className="text-5xl font-semibold tracking-tight select-none md:text-7xl">
@@ -39,7 +39,7 @@ export default function Home() {
           <div className="mt-10 flex items-center justify-center gap-3">
             <Link
               href="/dashboard"
-              className="rounded-xl bg-ember px-6 py-2.5 font-medium text-white shadow-[0_0_24px_rgba(232,104,26,0.3)] transition-all hover:bg-ember-bright hover:shadow-[0_0_32px_rgba(232,104,26,0.45)]"
+              className="rounded-xl bg-accent px-6 py-2.5 font-medium text-black shadow-[0_0_24px_rgba(255,255,255,0.15)] transition-all hover:bg-accent-bright hover:shadow-[0_0_32px_rgba(255,255,255,0.25)]"
             >
               Open dashboard
             </Link>

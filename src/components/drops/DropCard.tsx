@@ -71,7 +71,7 @@ export function DropCard({ drop, now, onRevoke, onDelete, busy }: DropCardProps)
           {status === "active" && (
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-line">
               <div
-                className="h-full rounded-full bg-ember transition-[width] duration-1000"
+                className="h-full rounded-full bg-accent transition-[width] duration-1000"
                 style={{ width: `${ttlFraction * 100}%` }}
               />
             </div>

@@ -181,7 +181,7 @@ export default function DashboardPage() {
                 type="checkbox"
                 checked={filter === "mine"}
                 onChange={(e) => setFilter(e.target.checked ? "mine" : "all")}
-                className="size-3.5 accent-ember"
+                className="size-3.5 accent-accent"
               />
               Mine only
             </label>

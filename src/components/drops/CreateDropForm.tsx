@@ -212,7 +212,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
             e.preventDefault();
             void handleFile(e.dataTransfer.files[0]);
           }}
-          className="w-full rounded-xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-ink-muted transition-colors hover:border-ember/50"
+          className="w-full rounded-xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-ink-muted transition-colors hover:border-accent/50"
         >
           {file ? (
             <span className="text-ink">
@@ -273,7 +273,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
               type="checkbox"
               checked={usePassphrase}
               onChange={(e) => setUsePassphrase(e.target.checked)}
-              className="size-4 accent-ember"
+              className="size-4 accent-accent"
             />
             <span className="text-ink-muted">Protect with a passphrase instead of a link key</span>
           </label>
