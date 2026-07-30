@@ -136,7 +136,9 @@ async function applyMigrations(pool, migrations) {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL;
+  // MIGRATE_DATABASE_URL lets serverless setups run DDL against a direct
+  // (unpooled) endpoint while the app itself uses a pooled URL.
+  const url = process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL;
   if (!url) {
     console.error("[migrate] DATABASE_URL is not set");
     process.exit(1);

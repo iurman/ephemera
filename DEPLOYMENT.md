@@ -1,6 +1,9 @@
 # Deploying Ephemera
 
-Ephemera ships as a single Docker image (Next.js standalone, Node 22) plus PostgreSQL 16. Migrations run automatically at container start.
+Two supported targets:
+
+- **Docker / Coolify** (primary): a single standalone image (Node 22) plus PostgreSQL 16, migrations at container start.
+- **Vercel + managed Postgres** (e.g. Neon): serverless functions, migrations at build time, retention sweep via Vercel Cron. See [Vercel](#vercel) below.
 
 ## Compose files
 
@@ -34,6 +37,27 @@ On first boot the entrypoint runs `scripts/migrate.mjs`:
 | `VIEWS_RETENTION_DAYS`          | no              | `30`                               | Days of view-log retention                    |
 | `PURGE_INTERVAL_MIN`            | no              | `60`                               | Minutes between retention sweeps              |
 | `SKIP_MIGRATIONS`               | no              | `false`                            | Skip migrations at startup                    |
+| `DB_POOL_MAX`                   | no              | `10` (`3` on Vercel)               | pg pool size per process                      |
+| `CRON_SECRET`                   | Vercel only     | —                                  | Bearer secret for `/api/cron/purge`           |
+| `MIGRATE_DATABASE_URL`          | no              | falls back to `DATABASE_URL`       | Direct (unpooled) URL used only by migrations |
+
+## Vercel
+
+The app runs on Vercel's Node serverless functions with a managed Postgres (Neon, Supabase, or any provider with a pooled connection string).
+
+1. Create a Postgres database. On Neon, note both connection strings: the **pooled** one (PgBouncer) and the **direct** one.
+2. Import the repo into Vercel. `vercel.json` already sets the build command to `node scripts/migrate.mjs && next build`, so migrations run during every deploy (including the legacy baseline stamping, if you're pointing at a pre-migration database).
+3. Set environment variables:
+   - `DATABASE_URL` — the **pooled** connection string
+   - `MIGRATE_DATABASE_URL` — the **direct** connection string (used only at build time)
+   - `CRON_SECRET` — any long random string; Vercel sends it as a bearer token to cron routes
+4. Deploy. The included cron (`0 4 * * *`, daily) hits `/api/cron/purge` for the retention sweep. On a Pro plan you can tighten the schedule; retention granularity is measured in days, so daily is enough. The in-process purge loop detects `VERCEL` and stays off.
+
+Serverless caveats, all documented deliberately:
+
+- Rate limiting is in-memory per function instance, so it's advisory on Vercel rather than a hard global limit. If that matters for your deployment, front it with Vercel's WAF rate limiting or swap the limiter for Upstash Redis.
+- File drops send ~1.4 MB request bodies at the 1 MiB file cap, safely under Vercel's 4.5 MB body limit.
+- `/api/health` works as a status endpoint; there's no container health check to wire up.
 
 ## Health checks
 

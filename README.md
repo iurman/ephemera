@@ -53,7 +53,7 @@ Honest threat-model note: like every browser-delivered E2E app, the encryption p
 - **Drizzle ORM** + **PostgreSQL 16**, real SQL migrations
 - **Tailwind CSS 4**, Zustand, WebCrypto (AES-256-GCM / PBKDF2)
 - **Vitest + PGlite** (routers tested against in-memory Postgres running the real migrations) · **Playwright** e2e · GitHub Actions CI
-- Docker standalone image, Node 22
+- Deploys two ways: Docker standalone image (Coolify/self-hosted) or Vercel + managed Postgres (migrations at build, retention via Vercel Cron)
 
 ## Quick start
 
