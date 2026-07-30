@@ -146,8 +146,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
       }
 
       const result = await createMut.mutateAsync(input);
-      const shareUrl =
-        `${window.location.origin}${result.url}` + (fragment ? `#${fragment}` : "");
+      const shareUrl = `${window.location.origin}${result.url}` + (fragment ? `#${fragment}` : "");
 
       onCreated({
         shareUrl,
@@ -177,7 +176,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {!cryptoOk && (
-        <p className="bg-warn-soft text-warn rounded-lg px-3 py-2 text-xs">
+        <p className="rounded-lg bg-warn-soft px-3 py-2 text-xs text-warn">
           WebCrypto unavailable (non-HTTPS context) — drops will be stored without end-to-end
           encryption.
         </p>
@@ -213,7 +212,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
             e.preventDefault();
             void handleFile(e.dataTransfer.files[0]);
           }}
-          className="border-line-strong hover:border-ember/50 text-ink-muted w-full rounded-xl border border-dashed px-4 py-8 text-center text-sm transition-colors"
+          className="w-full rounded-xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-ink-muted transition-colors hover:border-ember/50"
         >
           {file ? (
             <span className="text-ink">
@@ -243,7 +242,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-ink-faint flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-ink-faint">
           Expires in
           <Select
             value={String(ttlMs)}
@@ -251,7 +250,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
             options={TTL_OPTIONS}
           />
         </label>
-        <label className="text-ink-faint flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-ink-faint">
           Views
           <Input
             type="number"
@@ -274,7 +273,7 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
               type="checkbox"
               checked={usePassphrase}
               onChange={(e) => setUsePassphrase(e.target.checked)}
-              className="accent-ember size-4"
+              className="size-4 accent-ember"
             />
             <span className="text-ink-muted">Protect with a passphrase instead of a link key</span>
           </label>
@@ -290,11 +289,13 @@ export function CreateDropForm({ onCreated }: CreateDropFormProps) {
         </div>
       )}
 
-      {error && <p className="text-danger text-sm">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex items-center justify-between gap-3">
-        <p className="text-ink-faint text-xs">
-          {maxViews === 1 ? "Burns after a single view." : `Self-destructs after ${maxViews} views.`}
+        <p className="text-xs text-ink-faint">
+          {maxViews === 1
+            ? "Burns after a single view."
+            : `Self-destructs after ${maxViews} views.`}
         </p>
         <Button type="submit" variant="primary" loading={pending}>
           {sealing ? "Encrypting…" : "Create drop"}

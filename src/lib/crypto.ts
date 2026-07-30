@@ -71,7 +71,13 @@ export function generateSalt(): Uint8Array {
 }
 
 async function importAesKey(keyBytes: Uint8Array, usage: KeyUsage[]): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", keyBytes as BufferSource, { name: "AES-GCM" }, false, usage);
+  return crypto.subtle.importKey(
+    "raw",
+    keyBytes as BufferSource,
+    { name: "AES-GCM" },
+    false,
+    usage,
+  );
 }
 
 export async function deriveKeyFromPassphrase(

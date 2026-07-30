@@ -77,7 +77,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="py-16 text-center">
         <p className="text-ink-muted">Drop not found (or you don&apos;t have access).</p>
-        <Link href="/dashboard" className="text-ember-bright mt-4 inline-block text-sm underline">
+        <Link href="/dashboard" className="mt-4 inline-block text-sm text-ember-bright underline">
           Back to dashboard
         </Link>
       </div>
@@ -106,19 +106,19 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/dashboard" className="text-ink-faint hover:text-ink-muted text-sm">
+          <Link href="/dashboard" className="text-sm text-ink-faint hover:text-ink-muted">
             ← Dashboard
           </Link>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold">{d.title}</h1>
             <StatusBadge status={status} />
             {d.encVersion > 0 && (
-              <span className="text-ink-faint bg-surface-2 rounded px-2 py-0.5 text-xs">
+              <span className="rounded bg-surface-2 px-2 py-0.5 text-xs text-ink-faint">
                 {d.passwordProtected ? "E2E + passphrase" : "E2E encrypted"}
               </span>
             )}
           </div>
-          <p className="text-ink-faint mt-1 font-mono text-sm">/d/{d.token}</p>
+          <p className="mt-1 font-mono text-sm text-ink-faint">/d/{d.token}</p>
         </div>
         <div className="flex gap-2">
           {(d.encVersion === 0 || d.passwordProtected) && status === "active" && (
@@ -151,7 +151,9 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         <StatTile
           label="Views used"
           value={`${d.usedViews}/${d.maxViews}`}
-          hint={status === "active" ? `${Math.max(0, d.maxViews - d.usedViews)} remaining` : undefined}
+          hint={
+            status === "active" ? `${Math.max(0, d.maxViews - d.usedViews)} remaining` : undefined
+          }
         />
         <StatTile
           label="Time left"
@@ -160,7 +162,9 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         />
         <StatTile
           label="Time to first view"
-          value={stats.data?.timeToFirstSec != null ? formatTimeLeft(stats.data.timeToFirstSec) : "—"}
+          value={
+            stats.data?.timeToFirstSec != null ? formatTimeLeft(stats.data.timeToFirstSec) : "—"
+          }
         />
         <StatTile
           label="Unique networks"
@@ -169,7 +173,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         />
       </section>
 
-      <section className="bg-surface border-line rounded-2xl border p-5">
+      <section className="rounded-2xl border border-line bg-surface p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Views per minute</h2>
           <Segmented
@@ -187,7 +191,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="bg-surface border-line rounded-2xl border p-5">
+        <section className="rounded-2xl border border-line bg-surface p-5">
           <h2 className="mb-4 font-semibold">Lifecycle</h2>
           <ol className="space-y-3">
             {timeline.map((t) => (
@@ -195,12 +199,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <span
                   className={
                     t.at
-                      ? "bg-ember block size-2 rounded-full"
-                      : "bg-line block size-2 rounded-full"
+                      ? "block size-2 rounded-full bg-ember"
+                      : "block size-2 rounded-full bg-line"
                   }
                 />
                 <span className={t.at ? "text-ink" : "text-ink-faint"}>{t.label}</span>
-                <span className="text-ink-faint ml-auto font-mono text-xs">
+                <span className="ml-auto font-mono text-xs text-ink-faint">
                   {t.at ? t.at.toLocaleString() : "—"}
                 </span>
               </li>
@@ -208,25 +212,25 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           </ol>
         </section>
 
-        <section className="bg-surface border-line rounded-2xl border p-5">
+        <section className="rounded-2xl border border-line bg-surface p-5">
           <h2 className="mb-4 font-semibold">Recent views</h2>
           {recent.data?.views.length ? (
             <ul className="space-y-2">
               {recent.data.views.map((v) => (
                 <li
                   key={v.id}
-                  className="border-line flex items-center justify-between gap-3 border-b pb-2 text-sm last:border-0"
+                  className="flex items-center justify-between gap-3 border-b border-line pb-2 text-sm last:border-0"
                 >
                   <span className="text-ink-muted">{summarizeUserAgent(v.ua)}</span>
-                  <span className="text-ink-faint font-mono text-xs">{v.ip ?? "—"}</span>
-                  <span className="text-ink-faint text-xs whitespace-nowrap">
+                  <span className="font-mono text-xs text-ink-faint">{v.ip ?? "—"}</span>
+                  <span className="text-xs whitespace-nowrap text-ink-faint">
                     {formatSince(new Date(v.viewedAt), now)}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-ink-faint text-sm">No views recorded yet.</p>
+            <p className="text-sm text-ink-faint">No views recorded yet.</p>
           )}
         </section>
       </div>

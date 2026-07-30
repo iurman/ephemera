@@ -4,11 +4,11 @@ This guide covers deploying Ephemera using Docker, with specific instructions fo
 
 ## Docker Compose Files
 
-| File | Purpose |
-|------|---------|
-| `docker-compose.yml` | Production config for Coolify/PaaS (external database) |
-| `docker-compose.override.yml` | Local development overrides (auto-merged) |
-| `docker-compose.production.yml` | Self-hosted with bundled PostgreSQL |
+| File                            | Purpose                                                |
+| ------------------------------- | ------------------------------------------------------ |
+| `docker-compose.yml`            | Production config for Coolify/PaaS (external database) |
+| `docker-compose.override.yml`   | Local development overrides (auto-merged)              |
+| `docker-compose.production.yml` | Self-hosted with bundled PostgreSQL                    |
 
 ## Quick Start
 
@@ -80,17 +80,17 @@ docker compose -f docker-compose.production.yml up -d
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | - | PostgreSQL connection string |
-| `NODE_ENV` | No | `production` | Environment mode |
-| `HOST_PORT` | No | `3000` | External port to expose |
-| `SKIP_MIGRATIONS` | No | `false` | Skip database migrations on startup |
+| Variable          | Required | Default      | Description                         |
+| ----------------- | -------- | ------------ | ----------------------------------- |
+| `DATABASE_URL`    | Yes      | -            | PostgreSQL connection string        |
+| `NODE_ENV`        | No       | `production` | Environment mode                    |
+| `HOST_PORT`       | No       | `3000`       | External port to expose             |
+| `SKIP_MIGRATIONS` | No       | `false`      | Skip database migrations on startup |
 
 ### Development Only
 
-| Variable | Description |
-|----------|-------------|
+| Variable         | Description                                      |
+| ---------------- | ------------------------------------------------ |
 | `DEV_ADMIN_USER` | Username for /dev-login (disabled in production) |
 | `DEV_ADMIN_PASS` | Password for /dev-login (disabled in production) |
 

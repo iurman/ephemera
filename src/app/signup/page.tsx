@@ -10,9 +10,9 @@ import { Button, Input, Skeleton } from "@/components/ui";
 export default function SignupPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="bg-surface border-line-strong w-full max-w-md rounded-2xl border p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl">
         <Link href="/" className="mb-6 flex items-center gap-2 font-semibold tracking-tight">
-          <span className="bg-ember animate-ember-pulse block size-2.5 rounded-full" />
+          <span className="block size-2.5 animate-ember-pulse rounded-full bg-ember" />
           ephemera
         </Link>
         <Suspense fallback={<Skeleton className="h-64" />}>
@@ -50,12 +50,12 @@ function SignupForm() {
     return (
       <div className="text-center">
         <h1 className="text-xl font-semibold">Invalid invite link</h1>
-        <p className="text-ink-faint mt-2 text-sm">
+        <p className="mt-2 text-sm text-ink-faint">
           This invite link is missing its token. Ask for a fresh invite.
         </p>
         <Link
           href="/"
-          className="text-ink-muted hover:text-ink mt-6 inline-block text-sm transition-colors"
+          className="mt-6 inline-block text-sm text-ink-muted transition-colors hover:text-ink"
         >
           Back to home
         </Link>
@@ -66,7 +66,7 @@ function SignupForm() {
   return (
     <>
       <h1 className="text-xl font-semibold">Create your account</h1>
-      <p className="text-ink-faint mt-1 text-sm">
+      <p className="mt-1 text-sm text-ink-faint">
         You&apos;ve been invited to this ephemera instance.
       </p>
 
@@ -132,12 +132,12 @@ function SignupForm() {
       </form>
 
       {consumeInvite.isError && (
-        <p className="text-danger mt-4 text-sm">{consumeInvite.error.message}</p>
+        <p className="mt-4 text-sm text-danger">{consumeInvite.error.message}</p>
       )}
 
-      <p className="text-ink-faint mt-6 text-center text-xs">
+      <p className="mt-6 text-center text-xs text-ink-faint">
         Already have an account?{" "}
-        <Link href="/login" className="hover:text-ink-muted underline">
+        <Link href="/login" className="underline hover:text-ink-muted">
           Log in
         </Link>
       </p>

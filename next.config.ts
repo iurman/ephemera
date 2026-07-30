@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 // Next injects inline bootstrap scripts during hydration, so script-src needs
 // 'unsafe-inline' unless we adopt nonce-based CSP via a proxy. Documented
-// tradeoff for a self-hosted single-origin app.
+// tradeoff for a self-hosted single-origin app. Dev additionally needs
+// 'unsafe-eval' for Turbopack's runtime; production does not get it.
+const isDev = process.env.NODE_ENV === "development";
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
@@ -29,6 +31,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   serverExternalPackages: ["pg"],
+  // Dev-only: lets the Playwright container reach the dev server without
+  // Next's dev origin protection blocking hydration. Ignored in production.
+  allowedDevOrigins: ["127.0.0.1", "localhost", "172.19.0.1"],
   async headers() {
     return [
       {

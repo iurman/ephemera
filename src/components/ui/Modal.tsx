@@ -30,7 +30,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         if (e.target === ref.current) onClose();
       }}
       className={cn(
-        "bg-surface border-line-strong text-ink m-auto w-full max-w-md rounded-2xl border p-0",
+        "m-auto w-full max-w-md rounded-2xl border border-line-strong bg-surface p-0 text-ink",
         "backdrop:bg-black/60 backdrop:backdrop-blur-sm",
         "open:animate-fade-up",
         className,
@@ -43,7 +43,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             <button
               onClick={onClose}
               aria-label="Close"
-              className="text-ink-faint hover:text-ink -m-1 rounded-lg p-1 transition-colors"
+              className="-m-1 rounded-lg p-1 text-ink-faint transition-colors hover:text-ink"
             >
               <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeWidth={2} d="M6 6l12 12M18 6L6 18" />

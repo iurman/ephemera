@@ -15,9 +15,9 @@ Tiny Next.js app to create **drops** (text or URL) that expire by time and/or af
 
 ## 🔧 Stack
 
-- **Frontend:** Next.js App Router (15.x), React 18, TypeScript, Tailwind v4  
-- **Data/Server:** Drizzle ORM, Postgres 16, **tRPC v11**, TanStack Query v5  
-- **State:** Zustand (client UI filters/search/sort)  
+- **Frontend:** Next.js App Router (15.x), React 18, TypeScript, Tailwind v4
+- **Data/Server:** Drizzle ORM, Postgres 16, **tRPC v11**, TanStack Query v5
+- **State:** Zustand (client UI filters/search/sort)
 - **Infra:** Docker + docker-compose (Node 22 + Postgres)
 
 ## Data model (Drizzle)
@@ -37,23 +37,23 @@ Tiny Next.js app to create **drops** (text or URL) that expire by time and/or af
 
 ### Flows
 
-- **Bootstrap owner:** `auth.bootstrapOwner(displayName)`  
+- **Bootstrap owner:** `auth.bootstrapOwner(displayName)`
 - **Dev login (local):** `/dev-login` → `/api/auth/dev-login` with `DEV_ADMIN_USER/PASS`
 - **Create invite:** `auth.createInvite(expiresMinutes)` → `/signup?token=...` (owner/admin)
-- **Consume invite:** `auth.consumeInvite(token, displayName, [password])`  
+- **Consume invite:** `auth.consumeInvite(token, displayName, [password])`
 - **Logout:** `auth.logout()` clears session & cookie
 
 ## Routes
 
-- `/` – minimal landing  
-- `/dashboard` – create/revoke drops, live metrics, invites, sign out  
-- `/d/[token]` – server route: **records view**, updates metrics, redirects (URL) or renders text  
-- `/signup` – consumes invite token  
-- `/dev-login` – local only (env-gated)  
+- `/` – minimal landing
+- `/dashboard` – create/revoke drops, live metrics, invites, sign out
+- `/d/[token]` – server route: **records view**, updates metrics, redirects (URL) or renders text
+- `/signup` – consumes invite token
+- `/dev-login` – local only (env-gated)
 
 ## tRPC procedures (high level)
 
-- `auth.me`, `auth.bootstrapOwner`, `auth.createInvite`, `auth.consumeInvite`, `auth.logout`  
+- `auth.me`, `auth.bootstrapOwner`, `auth.createInvite`, `auth.consumeInvite`, `auth.logout`
 - `drop.create`, `drop.list`, `drop.revoke`, `drop.consume` (atomic view+metrics)
 
 > The tRPC client uses `fetch(..., { credentials: "include" })` so cookies round-trip. Mutations are POST.
@@ -65,8 +65,8 @@ Tiny Next.js app to create **drops** (text or URL) that expire by time and/or af
    ```bash
    docker compose up --build
    ```
-3. Open http://localhost:3000  
-   - **Bootstrap owner** on first run  
+3. Open http://localhost:3000
+   - **Bootstrap owner** on first run
    - Or visit http://localhost:3000/dev-login for local admin
 
 ### Reset DB (dev only)
@@ -79,6 +79,7 @@ docker compose up --build
 ## Local env
 
 Create **`.env.local`**:
+
 ```env
 # Postgres (compose)
 DATABASE_URL=postgres://postgres:postgres@db:5432/postgres

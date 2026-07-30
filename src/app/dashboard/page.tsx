@@ -115,15 +115,15 @@ export default function DashboardPage() {
 
       {/* Create + invite */}
       <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="bg-surface border-line rounded-2xl border p-5">
+        <div className="rounded-2xl border border-line bg-surface p-5">
           <h2 className="mb-4 font-semibold">New drop</h2>
           <CreateDropForm onCreated={setCreated} />
         </div>
 
         <div className="space-y-4">
-          <div className="bg-surface border-line rounded-2xl border p-5">
+          <div className="rounded-2xl border border-line bg-surface p-5">
             <h2 className="font-semibold">How sharing works</h2>
-            <ol className="text-ink-faint mt-3 list-decimal space-y-2 pl-4 text-sm leading-relaxed">
+            <ol className="mt-3 list-decimal space-y-2 pl-4 text-sm leading-relaxed text-ink-faint">
               <li>Your browser encrypts the drop; the server stores ciphertext.</li>
               <li>The one link you get holds the key in its #fragment.</li>
               <li>The recipient reveals it — then it burns.</li>
@@ -131,9 +131,9 @@ export default function DashboardPage() {
           </div>
 
           {isPrivileged && (
-            <div className="bg-surface border-line rounded-2xl border p-5">
+            <div className="rounded-2xl border border-line bg-surface p-5">
               <h2 className="font-semibold">Invite someone</h2>
-              <p className="text-ink-faint mt-1.5 text-sm">
+              <p className="mt-1.5 text-sm text-ink-faint">
                 One-time signup link, valid for an hour.
               </p>
               <div className="mt-3 flex items-center gap-2">
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 )}
               </div>
               {invite && (
-                <p className="text-ink-faint bg-surface-2 mt-3 rounded-lg p-2 font-mono text-xs break-all">
+                <p className="mt-3 rounded-lg bg-surface-2 p-2 font-mono text-xs break-all text-ink-faint">
                   {invite}
                 </p>
               )}
@@ -176,12 +176,12 @@ export default function DashboardPage() {
             size="sm"
           />
           {isPrivileged && (
-            <label className="text-ink-faint flex items-center gap-1.5 text-xs">
+            <label className="flex items-center gap-1.5 text-xs text-ink-faint">
               <input
                 type="checkbox"
                 checked={filter === "mine"}
                 onChange={(e) => setFilter(e.target.checked ? "mine" : "all")}
-                className="accent-ember size-3.5"
+                className="size-3.5 accent-ember"
               />
               Mine only
             </label>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
           </div>
         )}
         {list.isError && (
-          <p className="text-danger py-10 text-center text-sm">Failed to load drops.</p>
+          <p className="py-10 text-center text-sm text-danger">Failed to load drops.</p>
         )}
         {list.isSuccess && items.length === 0 && (
           <EmptyState

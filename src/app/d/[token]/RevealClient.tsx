@@ -132,22 +132,22 @@ export function RevealClient(props: RevealClientProps) {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="bg-surface border-line-strong w-full max-w-md rounded-2xl border p-6 text-center shadow-2xl">
-        <div className="bg-ember-soft mx-auto mb-5 flex size-14 items-center justify-center rounded-full">
-          <span className="bg-ember animate-ember-pulse block size-3.5 rounded-full" />
+      <div className="w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 text-center shadow-2xl">
+        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-ember-soft">
+          <span className="block size-3.5 animate-ember-pulse rounded-full bg-ember" />
         </div>
 
         {phase === "gone" ? (
           <>
             <h1 className="text-xl font-semibold">Just missed it</h1>
-            <p className="text-ink-faint mt-2 text-sm">
+            <p className="mt-2 text-sm text-ink-faint">
               This drop was consumed or expired a moment ago.
             </p>
           </>
         ) : missingKey ? (
           <>
             <h1 className="text-xl font-semibold">Key missing</h1>
-            <p className="text-ink-faint mt-2 text-sm leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-ink-faint">
               This drop is end-to-end encrypted and the decryption key travels in the link&apos;s{" "}
               <code className="text-ink-muted">#fragment</code> — but this link doesn&apos;t have
               one. Ask the sender for the complete link.
@@ -158,7 +158,7 @@ export function RevealClient(props: RevealClientProps) {
             <h1 className="text-xl font-semibold">
               {phase === "locked" ? "Enter the passphrase" : "A secret awaits"}
             </h1>
-            <p className="text-ink-faint mt-2 text-sm leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-ink-faint">
               {props.passwordProtected && phase !== "locked" && (
                 <>This drop is sealed with a passphrase. </>
               )}
@@ -191,7 +191,7 @@ export function RevealClient(props: RevealClientProps) {
               </div>
             )}
 
-            {error && <p className="text-danger mt-3 text-sm">{error}</p>}
+            {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
             <div className="mt-6">
               {phase === "locked" && payload ? (
@@ -218,7 +218,7 @@ export function RevealClient(props: RevealClientProps) {
               )}
             </div>
 
-            <p className="text-ink-faint mt-4 text-xs">
+            <p className="mt-4 text-xs text-ink-faint">
               Expires{" "}
               {formatTimeLeft(
                 Math.max(0, Math.floor((new Date(props.expiresAtIso).getTime() - now) / 1000)),
@@ -230,7 +230,7 @@ export function RevealClient(props: RevealClientProps) {
 
         <Link
           href="/"
-          className="text-ink-faint hover:text-ink-muted mt-6 inline-block text-xs transition-colors"
+          className="mt-6 inline-block text-xs text-ink-faint transition-colors hover:text-ink-muted"
         >
           powered by ephemera
         </Link>
@@ -249,8 +249,8 @@ function RevealedView({ content }: { content: RevealedContent }) {
       <div className="mx-auto max-w-2xl px-6 py-12">
         <div className="animate-dissolve-in">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="text-ink-faint flex items-center gap-2 text-xs">
-              <span className="bg-ember block size-2 rounded-full" />
+            <div className="flex items-center gap-2 text-xs text-ink-faint">
+              <span className="block size-2 rounded-full bg-ember" />
               {remaining === 0
                 ? "This was the last view — the drop is now ash."
                 : `${remaining} view${remaining === 1 ? "" : "s"} remaining.`}
@@ -268,10 +268,10 @@ function RevealedView({ content }: { content: RevealedContent }) {
             />
           )}
 
-          <footer className="border-line mt-10 border-t pt-4">
-            <p className="text-ink-faint text-xs">
+          <footer className="mt-10 border-t border-line pt-4">
+            <p className="text-xs text-ink-faint">
               Decrypted locally in your browser — the server only ever saw ciphertext.{" "}
-              <Link href="/" className="hover:text-ink-muted underline">
+              <Link href="/" className="underline hover:text-ink-muted">
                 ephemera
               </Link>
             </p>
@@ -301,18 +301,18 @@ function TextContent({ body }: { body: string }) {
       <div className="mb-3 flex justify-end">
         <button
           onClick={() => setRaw((r) => !r)}
-          className="text-ink-faint hover:text-ink-muted text-xs underline underline-offset-2"
+          className="text-xs text-ink-faint underline underline-offset-2 hover:text-ink-muted"
         >
           {raw ? "View rendered" : "View raw"}
         </button>
       </div>
       {raw || html === null ? (
-        <pre className="bg-surface border-line text-ink rounded-2xl border p-5 text-sm leading-relaxed break-words whitespace-pre-wrap">
+        <pre className="rounded-2xl border border-line bg-surface p-5 text-sm leading-relaxed break-words whitespace-pre-wrap text-ink">
           {body}
         </pre>
       ) : (
         <div
-          className="drop-prose bg-surface border-line rounded-2xl border p-5"
+          className="drop-prose rounded-2xl border border-line bg-surface p-5"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       )}
@@ -347,14 +347,14 @@ function UrlContent({ url }: { url: string }) {
   }, [seconds, cancelled, safe, url]);
 
   return (
-    <div className="bg-surface border-line rounded-2xl border p-6 text-center">
-      <p className="text-ink-faint text-sm">This drop redirects to</p>
+    <div className="rounded-2xl border border-line bg-surface p-6 text-center">
+      <p className="text-sm text-ink-faint">This drop redirects to</p>
       <p className={cn("mt-2 font-mono text-lg font-medium", safe ? "text-ink" : "text-danger")}>
         {host ?? "an invalid URL"}
       </p>
       {safe ? (
         <>
-          <p className="text-ink-faint mt-4 text-sm">
+          <p className="mt-4 text-sm text-ink-faint">
             {cancelled ? "Redirect cancelled." : `Redirecting in ${seconds}s…`}
           </p>
           <div className="mt-5 flex items-center justify-center gap-2">
@@ -370,7 +370,7 @@ function UrlContent({ url }: { url: string }) {
           </div>
         </>
       ) : (
-        <p className="text-danger mt-4 text-sm">Refusing to redirect to a non-http(s) URL.</p>
+        <p className="mt-4 text-sm text-danger">Refusing to redirect to a non-http(s) URL.</p>
       )}
     </div>
   );
@@ -403,19 +403,19 @@ function FileContent({
   }
 
   return (
-    <div className="bg-surface border-line rounded-2xl border p-6 text-center">
-      <p className="text-ink-faint text-sm">Encrypted file</p>
-      <p className="text-ink mt-2 font-mono text-lg font-medium break-all">{fileName}</p>
-      <p className="text-ink-faint mt-1 text-xs">
+    <div className="rounded-2xl border border-line bg-surface p-6 text-center">
+      <p className="text-sm text-ink-faint">Encrypted file</p>
+      <p className="mt-2 font-mono text-lg font-medium break-all text-ink">{fileName}</p>
+      <p className="mt-1 text-xs text-ink-faint">
         {formatBytes(size)} · {mimeType}
       </p>
       <button
         onClick={download}
-        className="bg-ember hover:bg-ember-bright mt-5 inline-block rounded-xl px-6 py-2.5 font-medium text-white transition-colors"
+        className="mt-5 inline-block rounded-xl bg-ember px-6 py-2.5 font-medium text-white transition-colors hover:bg-ember-bright"
       >
         Download
       </button>
-      <p className="text-ink-faint mt-4 text-xs">
+      <p className="mt-4 text-xs text-ink-faint">
         Save it now — this drop won&apos;t be available again.
       </p>
     </div>

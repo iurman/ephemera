@@ -22,6 +22,6 @@ export const useDashboardStore = create<State>()(
       setSearch: (search) => set({ search }),
       setSort: (sort) => set({ sort }),
     }),
-    { name: "ephemera-dashboard" }
-  )
+    { name: "ephemera-dashboard" },
+  ),
 );

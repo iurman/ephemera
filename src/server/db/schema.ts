@@ -30,7 +30,9 @@ export const drops = pgTable(
     maxViews: integer("max_views").notNull(),
     usedViews: integer("used_views").notNull().default(0),
 
-    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`now()`),
     expiresAt: timestamp("expires_at").notNull(),
     revokedAt: timestamp("revoked_at"),
 
@@ -53,8 +55,12 @@ export const views = pgTable(
   "views",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    dropId: varchar("drop_id", { length: 36 }).notNull().references(() => drops.id),
-    viewedAt: timestamp("viewed_at").notNull().default(sql`now()`),
+    dropId: varchar("drop_id", { length: 36 })
+      .notNull()
+      .references(() => drops.id),
+    viewedAt: timestamp("viewed_at")
+      .notNull()
+      .default(sql`now()`),
     ua: text("ua"),
     // Truncated before storage (IPv4 /24, IPv6 /48) — see truncateIp().
     ip: text("ip"),
@@ -69,15 +75,21 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   role: text("role").notNull().default("user"), // "owner" | "admin" | "user"
   passwordHash: text("password_hash"),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
 });
 
 export const sessions = pgTable(
   "sessions",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
-    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`now()`),
     expiresAt: timestamp("expires_at").notNull(),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
@@ -88,8 +100,12 @@ export const invites = pgTable(
   {
     id: varchar("id", { length: 36 }).primaryKey(),
     tokenHash: varchar("token_hash", { length: 128 }).notNull().unique(),
-    createdBy: varchar("created_by", { length: 36 }).notNull().references(() => users.id),
-    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+    createdBy: varchar("created_by", { length: 36 })
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`now()`),
     expiresAt: timestamp("expires_at").notNull(),
     usedBy: varchar("used_by", { length: 36 }),
     usedAt: timestamp("used_at"),

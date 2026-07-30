@@ -109,29 +109,29 @@ export default function AdminPage() {
         <StatTile label="Active sessions" value={overview.data?.activeSessions ?? "—"} />
       </section>
 
-      <section className="bg-surface border-line rounded-2xl border p-5">
+      <section className="rounded-2xl border border-line bg-surface p-5">
         <h2 className="mb-4 font-semibold">Users</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="text-ink-faint border-line border-b text-xs uppercase">
-                <th className="pb-2 pr-4 font-medium">User</th>
-                <th className="pb-2 pr-4 font-medium">Role</th>
-                <th className="pb-2 pr-4 font-medium">Drops</th>
-                <th className="pb-2 pr-4 font-medium">Sessions</th>
+              <tr className="border-b border-line text-xs text-ink-faint uppercase">
+                <th className="pr-4 pb-2 font-medium">User</th>
+                <th className="pr-4 pb-2 font-medium">Role</th>
+                <th className="pr-4 pb-2 font-medium">Drops</th>
+                <th className="pr-4 pb-2 font-medium">Sessions</th>
                 <th className="pb-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {usersQ.data?.map((u) => (
-                <tr key={u.id} className="border-line border-b last:border-0">
+                <tr key={u.id} className="border-b border-line last:border-0">
                   <td className="py-3 pr-4">
-                    <p className="text-ink font-medium">{u.displayName}</p>
-                    <p className="text-ink-faint text-xs">{u.email ?? "no email"}</p>
+                    <p className="font-medium text-ink">{u.displayName}</p>
+                    <p className="text-xs text-ink-faint">{u.email ?? "no email"}</p>
                   </td>
                   <td className="py-3 pr-4">
                     {u.role === "owner" ? (
-                      <span className="text-ember-bright text-xs font-medium">owner</span>
+                      <span className="text-xs font-medium text-ember-bright">owner</span>
                     ) : isOwner ? (
                       <Select
                         value={u.role}
@@ -148,11 +148,11 @@ export default function AdminPage() {
                         className="py-1 text-xs"
                       />
                     ) : (
-                      <span className="text-ink-muted text-xs">{u.role}</span>
+                      <span className="text-xs text-ink-muted">{u.role}</span>
                     )}
                   </td>
-                  <td className="text-ink-muted py-3 pr-4 tabular-nums">{u.dropCount}</td>
-                  <td className="text-ink-muted py-3 pr-4 tabular-nums">{u.activeSessions}</td>
+                  <td className="py-3 pr-4 text-ink-muted tabular-nums">{u.dropCount}</td>
+                  <td className="py-3 pr-4 text-ink-muted tabular-nums">{u.activeSessions}</td>
                   <td className="py-3">
                     <div className="flex gap-1.5">
                       <Button
@@ -185,20 +185,20 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <section className="bg-surface border-line rounded-2xl border p-5">
+      <section className="rounded-2xl border border-line bg-surface p-5">
         <h2 className="mb-4 font-semibold">Pending invites</h2>
         {invitesQ.data?.length ? (
           <ul className="space-y-2">
             {invitesQ.data.map((inv) => (
               <li
                 key={inv.id}
-                className="border-line flex items-center justify-between gap-3 border-b pb-2 text-sm last:border-0"
+                className="flex items-center justify-between gap-3 border-b border-line pb-2 text-sm last:border-0"
               >
                 <span className="text-ink-muted">
                   by {inv.createdByName ?? "deleted user"} · created{" "}
                   {formatSince(new Date(inv.createdAt), now)}
                 </span>
-                <span className="text-ink-faint text-xs">
+                <span className="text-xs text-ink-faint">
                   expires in{" "}
                   {formatTimeLeft(
                     Math.max(0, Math.floor((new Date(inv.expiresAt).getTime() - now) / 1000)),
@@ -215,7 +215,7 @@ export default function AdminPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-ink-faint text-sm">No pending invites.</p>
+          <p className="text-sm text-ink-faint">No pending invites.</p>
         )}
       </section>
     </div>

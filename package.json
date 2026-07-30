@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test:e2e:local": "bash scripts/e2e-local.sh"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

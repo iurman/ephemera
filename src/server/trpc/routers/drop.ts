@@ -306,42 +306,44 @@ export const dropRouter = router({
     }),
 
   /** Metadata for the detail page. Never returns the body. */
-  get: protectedProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ input, ctx }) => {
-    const [drop] = await ctx.db
-      .select({
-        id: drops.id,
-        token: drops.token,
-        ownerId: drops.ownerId,
-        kind: drops.kind,
-        title: drops.title,
-        encVersion: drops.encVersion,
-        passwordProtected: drops.passwordProtected,
-        ttlMs: drops.ttlMs,
-        maxViews: drops.maxViews,
-        usedViews: drops.usedViews,
-        createdAt: drops.createdAt,
-        expiresAt: drops.expiresAt,
-        revokedAt: drops.revokedAt,
-        firstViewedAt: drops.firstViewedAt,
-        lastViewedAt: drops.lastViewedAt,
-        exhaustedAt: drops.exhaustedAt,
-        purgedAt: drops.purgedAt,
-      })
-      .from(drops)
-      .where(eq(drops.id, input.id))
-      .limit(1);
+  get: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ input, ctx }) => {
+      const [drop] = await ctx.db
+        .select({
+          id: drops.id,
+          token: drops.token,
+          ownerId: drops.ownerId,
+          kind: drops.kind,
+          title: drops.title,
+          encVersion: drops.encVersion,
+          passwordProtected: drops.passwordProtected,
+          ttlMs: drops.ttlMs,
+          maxViews: drops.maxViews,
+          usedViews: drops.usedViews,
+          createdAt: drops.createdAt,
+          expiresAt: drops.expiresAt,
+          revokedAt: drops.revokedAt,
+          firstViewedAt: drops.firstViewedAt,
+          lastViewedAt: drops.lastViewedAt,
+          exhaustedAt: drops.exhaustedAt,
+          purgedAt: drops.purgedAt,
+        })
+        .from(drops)
+        .where(eq(drops.id, input.id))
+        .limit(1);
 
-    if (!drop) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Drop not found" });
-    }
+      if (!drop) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Drop not found" });
+      }
 
-    const isPrivileged = ctx.user.role === "owner" || ctx.user.role === "admin";
-    if (!isPrivileged && drop.ownerId !== ctx.user.id) {
-      throw new TRPCError({ code: "FORBIDDEN", message: "You can only view your own drops" });
-    }
+      const isPrivileged = ctx.user.role === "owner" || ctx.user.role === "admin";
+      if (!isPrivileged && drop.ownerId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You can only view your own drops" });
+      }
 
-    return { ...drop, kind: drop.kind as DropKind };
-  }),
+      return { ...drop, kind: drop.kind as DropKind };
+    }),
 });
 
 async function assertCanManage(

@@ -45,7 +45,7 @@ export function ProgressRing({ fraction, size = 44, label, sublabel }: ProgressR
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className="text-ink text-[11px] font-semibold">{label}</span>
+        <span className="text-[11px] font-semibold text-ink">{label}</span>
       </div>
     </div>
   );

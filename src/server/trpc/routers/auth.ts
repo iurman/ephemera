@@ -132,10 +132,7 @@ export const authRouter = router({
         passwordHash: await hashPassword(input.password),
       });
 
-      await ctx.db
-        .update(invites)
-        .set({ usedBy: uid, usedAt: now })
-        .where(eq(invites.id, inv.id));
+      await ctx.db.update(invites).set({ usedBy: uid, usedAt: now }).where(eq(invites.id, inv.id));
 
       await createSession(ctx.db, uid, ctx.setCookies);
       return { ok: true as const };

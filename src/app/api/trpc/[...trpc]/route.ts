@@ -18,13 +18,17 @@ function clientIp(req: Request): string | null {
 /**
  * Cross-origin browser requests are rejected as CSRF defense-in-depth
  * (SameSite=Lax cookies are the primary layer). Requests without an Origin
- * header (curl, server-to-server) pass through.
+ * header (curl, server-to-server) pass through. Compared against the Host
+ * header (or X-Forwarded-Host behind the reverse proxy) — req.url is
+ * normalized by Next and can't be trusted for this.
  */
 function isCrossOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
   if (!origin) return false;
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  if (!host) return true;
   try {
-    return new URL(origin).host !== new URL(req.url).host;
+    return new URL(origin).host !== host;
   } catch {
     return true;
   }

@@ -10,15 +10,13 @@ const DEFAULT_WINDOW_MINUTES = 60;
 
 const forDropSchema = z.object({
   dropId: z.string().uuid(),
-  windowMinutes: z
-    .number()
-    .int()
-    .min(1)
-    .max(MAX_WINDOW_MINUTES)
-    .default(DEFAULT_WINDOW_MINUTES),
+  windowMinutes: z.number().int().min(1).max(MAX_WINDOW_MINUTES).default(DEFAULT_WINDOW_MINUTES),
 });
 
-async function assertDropAccess(ctx: Context & { user: NonNullable<Context["user"]> }, dropId: string) {
+async function assertDropAccess(
+  ctx: Context & { user: NonNullable<Context["user"]> },
+  dropId: string,
+) {
   const [drop] = await ctx.db
     .select({
       id: drops.id,

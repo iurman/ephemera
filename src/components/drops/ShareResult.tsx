@@ -44,29 +44,29 @@ function ShareResultBody({ drop, onClose }: { drop: CreatedDrop; onClose: () => 
 
   return (
     <div className="space-y-4">
-      <div className="bg-surface-2 border-line rounded-xl border p-3">
-        <p className="text-ink-muted font-mono text-xs break-all">{drop.shareUrl}</p>
+      <div className="rounded-xl border border-line bg-surface-2 p-3">
+        <p className="font-mono text-xs break-all text-ink-muted">{drop.shareUrl}</p>
       </div>
 
       {drop.encrypted && !drop.passwordProtected && (
-        <p className="bg-ember-soft text-ember-bright rounded-lg px-3 py-2 text-xs leading-relaxed">
-          The decryption key lives in this link&apos;s <code>#fragment</code> and was never sent
-          to the server. This is the only time you&apos;ll see it — copy it now.
+        <p className="rounded-lg bg-ember-soft px-3 py-2 text-xs leading-relaxed text-ember-bright">
+          The decryption key lives in this link&apos;s <code>#fragment</code> and was never sent to
+          the server. This is the only time you&apos;ll see it — copy it now.
         </p>
       )}
       {drop.passwordProtected && (
-        <p className="bg-ember-soft text-ember-bright rounded-lg px-3 py-2 text-xs leading-relaxed">
-          The recipient needs the passphrase to decrypt. Share it over a different channel than
-          the link.
+        <p className="rounded-lg bg-ember-soft px-3 py-2 text-xs leading-relaxed text-ember-bright">
+          The recipient needs the passphrase to decrypt. Share it over a different channel than the
+          link.
         </p>
       )}
       {!drop.encrypted && (
-        <p className="bg-warn-soft text-warn rounded-lg px-3 py-2 text-xs">
+        <p className="rounded-lg bg-warn-soft px-3 py-2 text-xs text-warn">
           Stored without end-to-end encryption (WebCrypto unavailable).
         </p>
       )}
 
-      <p className="text-ink-faint text-xs">
+      <p className="text-xs text-ink-faint">
         Expires in {formatDuration(drop.ttlMs)} or after{" "}
         {drop.maxViews === 1 ? "one view" : `${drop.maxViews} views`}, whichever comes first.
       </p>

@@ -33,11 +33,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <header className="border-line bg-bg/70 sticky top-0 z-20 border-b backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-line bg-bg/70 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <span className="bg-ember animate-ember-pulse block size-2.5 rounded-full" />
+              <span className="block size-2.5 animate-ember-pulse rounded-full bg-ember" />
               ephemera
             </Link>
             <nav className="flex items-center gap-1">
@@ -60,9 +60,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-3">
             {me.data && (
-              <span className="text-ink-faint hidden text-sm sm:block">
+              <span className="hidden text-sm text-ink-faint sm:block">
                 {me.data.displayName}
-                <span className="text-ink-faint/60 ml-1">({me.data.role})</span>
+                <span className="ml-1 text-ink-faint/60">({me.data.role})</span>
               </span>
             )}
             <Button

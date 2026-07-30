@@ -26,7 +26,7 @@ export function DropCard({ drop, now, onRevoke, onDelete, busy }: DropCardProps)
     <div
       className={cn(
         "rounded-2xl border p-4 transition-colors",
-        status === "active" ? "bg-surface border-line-strong" : "bg-surface/40 border-line",
+        status === "active" ? "border-line-strong bg-surface" : "border-line bg-surface/40",
       )}
     >
       <div className="flex items-start gap-4">
@@ -38,13 +38,13 @@ export function DropCard({ drop, now, onRevoke, onDelete, busy }: DropCardProps)
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-ink truncate font-medium">{drop.title}</h3>
-            <span className="text-ink-faint bg-surface-2 rounded px-1.5 py-0.5 text-[11px]">
+            <h3 className="truncate font-medium text-ink">{drop.title}</h3>
+            <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-faint">
               {kindLabels[drop.kind]}
             </span>
             {drop.encVersion > 0 && (
               <span
-                className="text-ink-faint bg-surface-2 rounded px-1.5 py-0.5 text-[11px]"
+                className="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-faint"
                 title={
                   drop.passwordProtected
                     ? "End-to-end encrypted with a passphrase"
@@ -57,9 +57,9 @@ export function DropCard({ drop, now, onRevoke, onDelete, busy }: DropCardProps)
             <StatusBadge status={status} />
           </div>
 
-          <p className="text-ink-faint mt-1 truncate font-mono text-xs">/d/{drop.token}</p>
+          <p className="mt-1 truncate font-mono text-xs text-ink-faint">/d/{drop.token}</p>
 
-          <div className="text-ink-muted mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
             <span>
               {drop.usedViews}/{drop.maxViews} views
             </span>
@@ -69,9 +69,9 @@ export function DropCard({ drop, now, onRevoke, onDelete, busy }: DropCardProps)
           </div>
 
           {status === "active" && (
-            <div className="bg-line mt-3 h-1 overflow-hidden rounded-full">
+            <div className="mt-3 h-1 overflow-hidden rounded-full bg-line">
               <div
-                className="bg-ember h-full rounded-full transition-[width] duration-1000"
+                className="h-full rounded-full bg-ember transition-[width] duration-1000"
                 style={{ width: `${ttlFraction * 100}%` }}
               />
             </div>

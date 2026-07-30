@@ -66,10 +66,7 @@ export function Sparkline({ data, windowMinutes, endMs, height = 120 }: Sparklin
 
   if (!data.length) {
     return (
-      <div
-        className="text-ink-faint flex items-center justify-center text-sm"
-        style={{ height }}
-      >
+      <div className="flex items-center justify-center text-sm text-ink-faint" style={{ height }}>
         No views in this window yet.
       </div>
     );
@@ -95,7 +92,13 @@ export function Sparkline({ data, windowMinutes, endMs, height = 120 }: Sparklin
         <path d={area} fill="var(--color-ember)" opacity={0.12} />
         <path d={path} fill="none" stroke="var(--color-ember)" strokeWidth={2} />
         {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={hover?.x === p.x ? 4 : 2.5} fill="var(--color-ember)" />
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r={hover?.x === p.x ? 4 : 2.5}
+            fill="var(--color-ember)"
+          />
         ))}
         {maxPoint && (
           <text
@@ -124,14 +127,16 @@ export function Sparkline({ data, windowMinutes, endMs, height = 120 }: Sparklin
 
       {hover && (
         <div
-          className="bg-surface-2 border-line-strong text-ink pointer-events-none absolute z-10 rounded-lg border px-2.5 py-1.5 text-xs shadow-lg"
+          className="pointer-events-none absolute z-10 rounded-lg border border-line-strong bg-surface-2 px-2.5 py-1.5 text-xs text-ink shadow-lg"
           style={{
             left: `${(hover.x / width) * 100}%`,
             top: 0,
             transform: `translateX(${hover.x > width / 2 ? "-110%" : "10%"})`,
           }}
         >
-          <span className="font-medium">{hover.point.c} view{hover.point.c === 1 ? "" : "s"}</span>{" "}
+          <span className="font-medium">
+            {hover.point.c} view{hover.point.c === 1 ? "" : "s"}
+          </span>{" "}
           <span className="text-ink-faint">
             {hover.point.t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>

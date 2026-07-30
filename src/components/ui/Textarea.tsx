@@ -14,15 +14,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           className={cn(
-            "bg-surface text-ink placeholder-ink-faint w-full rounded-lg border px-3 py-2",
-            "focus:ring-ember/50 font-mono text-sm transition-colors focus:ring-2 focus:outline-none",
+            "w-full rounded-lg border bg-surface px-3 py-2 text-ink placeholder-ink-faint",
+            "font-mono text-sm transition-colors focus:ring-2 focus:ring-ember/50 focus:outline-none",
             "disabled:cursor-not-allowed disabled:opacity-50",
             error ? "border-danger/50" : "border-line-strong focus:border-transparent",
             className,
           )}
           {...props}
         />
-        {error && <p className="text-danger mt-1 text-sm">{error}</p>}
+        {error && <p className="mt-1 text-sm text-danger">{error}</p>}
       </div>
     );
   },

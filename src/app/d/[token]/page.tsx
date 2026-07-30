@@ -66,8 +66,8 @@ function UnavailablePage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="max-w-md text-center">
-        <div className="bg-surface-2 mx-auto mb-6 flex size-16 items-center justify-center rounded-full">
-          <span className="text-ink-faint text-2xl" aria-hidden>
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-surface-2">
+          <span className="text-2xl text-ink-faint" aria-hidden>
             ⌛
           </span>
         </div>
@@ -77,7 +77,7 @@ function UnavailablePage() {
         </p>
         <Link
           href="/"
-          className="text-ink-muted hover:text-ink mt-6 inline-flex items-center text-sm transition-colors"
+          className="mt-6 inline-flex items-center text-sm text-ink-muted transition-colors hover:text-ink"
         >
           ← ephemera
         </Link>

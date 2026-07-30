@@ -13,9 +13,9 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="bg-surface border-line-strong w-full max-w-md rounded-2xl border p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl">
         <Link href="/" className="mb-6 flex items-center gap-2 font-semibold tracking-tight">
-          <span className="bg-ember animate-ember-pulse block size-2.5 rounded-full" />
+          <span className="block size-2.5 animate-ember-pulse rounded-full bg-ember" />
           ephemera
         </Link>
 
@@ -55,7 +55,7 @@ function LoginForm() {
   return (
     <>
       <h1 className="text-xl font-semibold">Welcome back</h1>
-      <p className="text-ink-faint mt-1 text-sm">Log in to manage your drops.</p>
+      <p className="mt-1 text-sm text-ink-faint">Log in to manage your drops.</p>
 
       <form
         className="mt-6 space-y-4"
@@ -92,9 +92,9 @@ function LoginForm() {
         </Button>
       </form>
 
-      {loginMut.isError && <p className="text-danger mt-4 text-sm">{loginMut.error.message}</p>}
+      {loginMut.isError && <p className="mt-4 text-sm text-danger">{loginMut.error.message}</p>}
 
-      <p className="text-ink-faint mt-6 text-center text-xs">
+      <p className="mt-6 text-center text-xs text-ink-faint">
         No account? Ask the instance owner for an invite link.
       </p>
     </>
@@ -122,9 +122,9 @@ function FirstRunSetup() {
   return (
     <>
       <h1 className="text-xl font-semibold">First run — create the owner</h1>
-      <p className="text-ink-faint mt-1 text-sm">
-        This instance has no accounts yet. Set up the owner account with real credentials so you
-        can always log back in.
+      <p className="mt-1 text-sm text-ink-faint">
+        This instance has no accounts yet. Set up the owner account with real credentials so you can
+        always log back in.
       </p>
 
       <form
@@ -172,7 +172,7 @@ function FirstRunSetup() {
       </form>
 
       {bootstrapMut.isError && (
-        <p className="text-danger mt-4 text-sm">{bootstrapMut.error.message}</p>
+        <p className="mt-4 text-sm text-danger">{bootstrapMut.error.message}</p>
       )}
     </>
   );
