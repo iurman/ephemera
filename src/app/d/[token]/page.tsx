@@ -1,140 +1,86 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { appRouter } from "@/server/trpc/root";
-import { formatTimeLeft, textToHtml } from "@/lib/utils";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { db } from "@/server/db/client";
+import { drops } from "@/server/db/schema";
+import { RevealClient } from "./RevealClient";
+import type { DropKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
+
+export const metadata: Metadata = {
+  title: "secret drop",
+  robots: { index: false, follow: false },
+};
 
 interface PageProps {
   params: Promise<{ token: string }>;
 }
 
+/**
+ * The reveal gate. Rendering this page NEVER consumes a view — link
+ * previews, prefetchers, and curious middleboxes see only the gate. The
+ * actual consume happens on an explicit user action in RevealClient.
+ */
 export default async function DropPage({ params }: PageProps) {
   const { token } = await params;
-  const h = await headers();
+  const now = new Date();
 
-  // Extract client info
-  const userAgent = h.get("user-agent") ?? "";
-  const ip = (h.get("x-forwarded-for") ?? h.get("x-real-ip") ?? "")
-    .split(",")[0]
-    .trim() || undefined;
+  const [row] = await db
+    .select({
+      kind: drops.kind,
+      encVersion: drops.encVersion,
+      passwordProtected: drops.passwordProtected,
+      expiresAt: drops.expiresAt,
+      maxViews: drops.maxViews,
+      usedViews: drops.usedViews,
+    })
+    .from(drops)
+    .where(
+      and(
+        eq(drops.token, token),
+        isNull(drops.revokedAt),
+        gt(drops.expiresAt, now),
+        sql`${drops.usedViews} < ${drops.maxViews}`,
+      ),
+    )
+    .limit(1);
 
-  // Create a server-side caller
-  const caller = appRouter.createCaller({
-    user: null,
-    sid: null,
-    setCookies: [],
-    db: null as any, // Not used for consume
-  });
-
-  // Attempt to consume the drop
-  const result = await caller.drop.consume({ token, ua: userAgent, ip });
-
-  // Handle invalid/expired drops
-  if (!result.ok) {
-    return <InvalidDropPage />;
+  if (!row) {
+    return <UnavailablePage />;
   }
 
-  // Handle URL redirects
-  if (result.kind === "url" && result.url) {
-    redirect(result.url);
-  }
-
-  // Render text content
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="max-w-2xl mx-auto p-6 py-12">
-        <article className="space-y-6">
-          {/* Header */}
-          <header>
-            <h1 className="text-2xl font-semibold">
-              {result.title ?? "Ephemeral Note"}
-            </h1>
-            {typeof result.expiresInMs === "number" && result.expiresInMs > 0 && (
-              <p className="text-sm text-white/50 mt-2">
-                This content expires in {formatTimeLeft(Math.floor(result.expiresInMs / 1000))}
-              </p>
-            )}
-            {typeof result.remaining === "number" && (
-              <p className="text-sm text-white/50">
-                {result.remaining === 0
-                  ? "This was the last view"
-                  : `${result.remaining} view${result.remaining !== 1 ? "s" : ""} remaining`}
-              </p>
-            )}
-          </header>
-
-          <hr className="border-white/10" />
-
-          {/* Content */}
-          <div
-            className="prose prose-invert prose-sm max-w-none leading-relaxed"
-            dangerouslySetInnerHTML={{
-              __html: textToHtml(result.body ?? ""),
-            }}
-          />
-
-          {/* Footer */}
-          <footer className="pt-6 border-t border-white/10">
-            <p className="text-xs text-white/30">
-              Powered by{" "}
-              <a
-                href="/"
-                className="hover:text-white/50 transition-colors"
-              >
-                Ephemera
-              </a>
-            </p>
-          </footer>
-        </article>
-      </div>
-    </main>
+    <RevealClient
+      token={token}
+      kind={row.kind as DropKind}
+      encVersion={row.encVersion}
+      passwordProtected={row.passwordProtected}
+      remaining={Math.max(0, row.maxViews - row.usedViews)}
+      expiresAtIso={row.expiresAt.toISOString()}
+    />
   );
 }
 
-function InvalidDropPage() {
+function UnavailablePage() {
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-      <div className="text-center max-w-md">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
-          <svg
-            className="w-8 h-8 text-white/40"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <div className="max-w-md text-center">
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-surface-2">
+          <span className="text-2xl text-ink-faint" aria-hidden>
+            ⌛
+          </span>
         </div>
-        <h1 className="text-xl font-semibold mb-2">Link Unavailable</h1>
-        <p className="text-white/50 mb-6">
-          This link has expired, been revoked, or reached its view limit.
+        <h1 className="mb-2 text-xl font-semibold">This drop is gone</h1>
+        <p className="text-ink-faint">
+          It expired, was revoked, or reached its view limit. Ephemeral means ephemeral.
         </p>
-        <a
+        <Link
           href="/"
-          className="inline-flex items-center text-sm text-white/60 hover:text-white transition-colors"
+          className="mt-6 inline-flex items-center text-sm text-ink-muted transition-colors hover:text-ink"
         >
-          <svg
-            className="w-4 h-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Back to home
-        </a>
+          ← ephemera
+        </Link>
       </div>
     </main>
   );

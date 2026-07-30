@@ -1,217 +1,192 @@
 import { z } from "zod";
+import crypto from "node:crypto";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, adminProcedure } from "../index";
-import { db } from "../../db/client";
-import { users, sessions, invites } from "../../db/schema";
 import { and, eq, isNull, gt } from "drizzle-orm";
-import crypto from "crypto";
+import { router, publicProcedure, adminProcedure, protectedProcedure, rateLimit } from "../index";
+import { users, sessions, invites } from "@/server/db/schema";
+import { hashPassword, verifyPassword } from "@/server/auth/password";
+import { createSession, clearSessionCookie } from "@/server/auth/session";
 
-// Constants
-const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const MIN_PASSWORD_LENGTH = 6;
-const SCRYPT_KEY_LENGTH = 64;
+const MIN_PASSWORD_LENGTH = 8;
 
-// Helper functions
 function hashToken(raw: string): string {
   return crypto.createHash("sha256").update(raw).digest("hex");
 }
 
-function makeSessionCookie(id: string, exp: Date): string {
-  const parts = [
-    `sid=${encodeURIComponent(id)}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Expires=${exp.toUTCString()}`,
-  ];
-  if (process.env.NODE_ENV === "production") {
-    parts.push("Secure");
-  }
-  return parts.join("; ");
-}
+const passwordSchema = z
+  .string()
+  .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+  .max(200);
 
-function clearSessionCookie(): string {
-  return `sid=; Path=/; HttpOnly; SameSite=Lax; Expires=${new Date(0).toUTCString()}`;
-}
-
-function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const buf = crypto.scryptSync(password, salt, SCRYPT_KEY_LENGTH);
-  return `${salt}:${buf.toString("hex")}`;
-}
-
-function verifyPassword(password: string, stored: string | null): boolean {
-  if (!stored) return false;
-  const [salt, hex] = stored.split(":");
-  if (!salt || !hex) return false;
-  const hash = Buffer.from(hex, "hex");
-  const test = crypto.scryptSync(password, salt, SCRYPT_KEY_LENGTH);
-  return crypto.timingSafeEqual(hash, test);
-}
-
-async function createSession(userId: string, ctx: { setCookies: string[] }): Promise<void> {
-  const sid = crypto.randomUUID();
-  const exp = new Date(Date.now() + SESSION_DURATION_MS);
-  await db.insert(sessions).values({ id: sid, userId, expiresAt: exp });
-  ctx.setCookies.push(makeSessionCookie(sid, exp));
-}
-
-// Input schemas
 const bootstrapOwnerSchema = z.object({
-  displayName: z.string().min(1, "Display name is required").max(100),
+  displayName: z.string().trim().min(1, "Display name is required").max(100),
+  email: z.email("A valid email is required"),
+  password: passwordSchema,
 });
 
 const createInviteSchema = z.object({
-  expiresMinutes: z.number().int().min(1).max(7 * 24 * 60).default(60),
+  expiresMinutes: z
+    .number()
+    .int()
+    .min(1)
+    .max(7 * 24 * 60)
+    .default(60),
 });
 
 const consumeInviteSchema = z.object({
   token: z.string().min(1),
-  displayName: z.string().min(1, "Display name is required").max(100),
-  email: z.string().email().optional(),
-  password: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
+  displayName: z.string().trim().min(1, "Display name is required").max(100),
+  email: z.email("A valid email is required"),
+  password: passwordSchema,
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.email(),
+  password: z.string().min(1).max(200),
 });
 
 export const authRouter = router({
-  // Get current user
   me: publicProcedure.query(async ({ ctx }) => ctx.user),
 
-  // Bootstrap the first owner account (only works on fresh database)
+  /** Whether this instance has any accounts yet (drives first-run UI). */
+  status: publicProcedure.query(async ({ ctx }) => {
+    const existing = await ctx.db.select({ id: users.id }).from(users).limit(1);
+    return { hasUsers: existing.length > 0 };
+  }),
+
+  /**
+   * First-run setup. Creates the owner account with real credentials so the
+   * owner can always log back in.
+   */
   bootstrapOwner: publicProcedure
+    .use(rateLimit("auth.bootstrap", 10, 60_000))
     .input(bootstrapOwnerSchema)
     .mutation(async ({ input, ctx }) => {
-      const existing = await db.select({ id: users.id }).from(users).limit(1);
+      const existing = await ctx.db.select({ id: users.id }).from(users).limit(1);
       if (existing.length > 0) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "An owner account already exists",
-        });
+        throw new TRPCError({ code: "CONFLICT", message: "An owner account already exists" });
       }
 
       const uid = crypto.randomUUID();
-      await db.insert(users).values({
+      await ctx.db.insert(users).values({
         id: uid,
         displayName: input.displayName,
+        email: input.email,
         role: "owner",
+        passwordHash: await hashPassword(input.password),
       });
 
-      await createSession(uid, ctx);
+      await createSession(ctx.db, uid, ctx.setCookies);
       return { ok: true as const };
     }),
 
-  // Create an invite (admin/owner only)
-  createInvite: adminProcedure
-    .input(createInviteSchema)
-    .mutation(async ({ ctx, input }) => {
-      const raw = crypto.randomBytes(24).toString("base64url");
-      const id = crypto.randomUUID();
-      const exp = new Date(Date.now() + input.expiresMinutes * 60 * 1000);
+  createInvite: adminProcedure.input(createInviteSchema).mutation(async ({ ctx, input }) => {
+    const raw = crypto.randomBytes(24).toString("base64url");
+    await ctx.db.insert(invites).values({
+      id: crypto.randomUUID(),
+      tokenHash: hashToken(raw),
+      createdBy: ctx.user.id,
+      expiresAt: new Date(Date.now() + input.expiresMinutes * 60 * 1000),
+      maxUses: 1,
+    });
+    return { ok: true as const, url: `/signup?token=${raw}` };
+  }),
 
-      await db.insert(invites).values({
-        id,
-        tokenHash: hashToken(raw),
-        createdBy: ctx.user.id,
-        expiresAt: exp,
-        maxUses: 1,
-      });
-
-      return { ok: true as const, url: `/signup?token=${raw}` };
-    }),
-
-  // Sign up using invite
   consumeInvite: publicProcedure
+    .use(rateLimit("auth.signup", 10, 60_000))
     .input(consumeInviteSchema)
     .mutation(async ({ input, ctx }) => {
       const tokenHash = hashToken(input.token);
       const now = new Date();
 
-      const [inv] = await db
+      const [inv] = await ctx.db
         .select()
         .from(invites)
         .where(
-          and(
-            eq(invites.tokenHash, tokenHash),
-            isNull(invites.usedAt),
-            gt(invites.expiresAt, now)
-          )
+          and(eq(invites.tokenHash, tokenHash), isNull(invites.usedAt), gt(invites.expiresAt, now)),
         )
         .limit(1);
 
       if (!inv) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid or expired invite",
-        });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid or expired invite" });
       }
 
-      // Check if email is already taken
-      if (input.email) {
-        const [existingUser] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.email, input.email))
-          .limit(1);
-
-        if (existingUser) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "An account with this email already exists",
-          });
-        }
-      }
-
-      // Create user
-      const uid = crypto.randomUUID();
-      await db.insert(users).values({
-        id: uid,
-        displayName: input.displayName,
-        email: input.email ?? null,
-        role: "user",
-        passwordHash: hashPassword(input.password),
-      });
-
-      // Mark invite as used
-      await db
-        .update(invites)
-        .set({ usedBy: uid, usedAt: now })
-        .where(eq(invites.id, inv.id));
-
-      await createSession(uid, ctx);
-      return { ok: true as const };
-    }),
-
-  // Login with email and password
-  loginWithPassword: publicProcedure
-    .input(loginSchema)
-    .mutation(async ({ input, ctx }) => {
-      const [user] = await db
-        .select()
+      const [existingUser] = await ctx.db
+        .select({ id: users.id })
         .from(users)
         .where(eq(users.email, input.email))
         .limit(1);
-
-      if (!user || !verifyPassword(input.password, user.passwordHash ?? null)) {
+      if (existingUser) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid email or password",
+          code: "CONFLICT",
+          message: "An account with this email already exists",
         });
       }
 
-      await createSession(user.id, ctx);
+      const uid = crypto.randomUUID();
+      await ctx.db.insert(users).values({
+        id: uid,
+        displayName: input.displayName,
+        email: input.email,
+        role: "user",
+        passwordHash: await hashPassword(input.password),
+      });
+
+      await ctx.db.update(invites).set({ usedBy: uid, usedAt: now }).where(eq(invites.id, inv.id));
+
+      await createSession(ctx.db, uid, ctx.setCookies);
       return { ok: true as const };
     }),
 
-  // Logout
+  login: publicProcedure
+    .use(rateLimit("auth.login", 10, 60_000))
+    .input(loginSchema)
+    .mutation(async ({ input, ctx }) => {
+      const [user] = await ctx.db.select().from(users).where(eq(users.email, input.email)).limit(1);
+
+      const valid = await verifyPassword(input.password, user?.passwordHash ?? null);
+      if (!user || !valid) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
+
+      await createSession(ctx.db, user.id, ctx.setCookies);
+      return { ok: true as const };
+    }),
+
+  changePassword: protectedProcedure
+    .use(rateLimit("auth.changePassword", 10, 60_000))
+    .input(z.object({ currentPassword: z.string().min(1), newPassword: passwordSchema }))
+    .mutation(async ({ input, ctx }) => {
+      const [user] = await ctx.db
+        .select({ passwordHash: users.passwordHash })
+        .from(users)
+        .where(eq(users.id, ctx.user.id))
+        .limit(1);
+
+      const valid = await verifyPassword(input.currentPassword, user?.passwordHash ?? null);
+      if (!valid) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Current password is incorrect" });
+      }
+
+      await ctx.db
+        .update(users)
+        .set({ passwordHash: await hashPassword(input.newPassword) })
+        .where(eq(users.id, ctx.user.id));
+
+      return { ok: true as const };
+    }),
+
   logout: publicProcedure.mutation(async ({ ctx }) => {
-    const sid = ctx.sid;
-    if (sid) {
-      await db.delete(sessions).where(eq(sessions.id, sid));
+    if (ctx.sid) {
+      await ctx.db.delete(sessions).where(eq(sessions.id, ctx.sid));
     }
+    ctx.setCookies.push(clearSessionCookie());
+    return { ok: true as const };
+  }),
+
+  /** Sign out everywhere: delete all of this user's sessions. */
+  logoutAll: protectedProcedure.mutation(async ({ ctx }) => {
+    await ctx.db.delete(sessions).where(eq(sessions.userId, ctx.user.id));
     ctx.setCookies.push(clearSessionCookie());
     return { ok: true as const };
   }),

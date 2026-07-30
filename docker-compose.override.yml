@@ -1,26 +1,26 @@
 # docker-compose.override.yml
-# Local development overrides - automatically merged with docker-compose.yml
+# Local development overrides — automatically merged with docker-compose.yml
+# when running `docker compose up` locally. Not used by Coolify.
 #
-# This file is NOT used by Coolify or production deployments.
-# It's only applied when running `docker compose up` locally.
-#
-# Usage:
-#   POSTGRES_PASSWORD=dev docker compose up      # Starts app + db with dev settings
-#   docker compose down                          # Stops everything
-
+# For plain local development without containers, prefer:
+#   docker compose -f docker-compose.dev.yml up -d   # database only
+#   npm run db:migrate && npm run dev
 services:
   db:
-    image: postgres:16  # Use full image for better dev tooling
+    image: postgres:16 # full image for better dev tooling
     ports:
-      - "5432:5432"     # Expose for local DB tools
+      - "5432:5432"
 
   app:
+    build:
+      context: .
+      target: deps # dev deps + npm available; source comes from the mount
     environment:
       NODE_ENV: development
     ports:
-      - "3005:3000"     # Different port to avoid conflicts
+      - "3005:3000"
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
-    command: sh -c "npm run drizzle:push -- --force && npm run dev"
+    command: sh -c "node scripts/migrate.mjs && npx next dev -p 3000"

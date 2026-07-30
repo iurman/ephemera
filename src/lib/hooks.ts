@@ -3,47 +3,39 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 /**
- * Hook that returns the current timestamp, updating at the specified interval.
- * Optimized to pause when the document is hidden.
+ * Current timestamp, ticking at `tickMs`. Pauses while the tab is hidden.
  */
 export function useNow(tickMs = 1000): number {
   const [now, setNow] = useState(() => Date.now());
-  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const tick = () => setNow(Date.now());
+    let intervalId: number | null = null;
 
-    const startInterval = () => {
-      if (intervalRef.current === null) {
-        tick(); // Immediate update when resuming
-        intervalRef.current = window.setInterval(tick, tickMs);
+    const start = () => {
+      if (intervalId === null) {
+        intervalId = window.setInterval(() => setNow(Date.now()), tickMs);
       }
     };
-
-    const stopInterval = () => {
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    const stop = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
       }
     };
-
-    const handleVisibilityChange = () => {
+    const onVisibility = () => {
       if (document.hidden) {
-        stopInterval();
+        stop();
       } else {
-        startInterval();
+        setNow(Date.now()); // catch up immediately on return
+        start();
       }
     };
 
-    // Start the interval
-    startInterval();
-
-    // Listen for visibility changes
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      stopInterval();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [tickMs]);
 
@@ -51,7 +43,7 @@ export function useNow(tickMs = 1000): number {
 }
 
 /**
- * Hook for copying text to clipboard with feedback
+ * Copy text to the clipboard with a transient "copied" flag.
  */
 export function useCopyToClipboard(): {
   copied: boolean;
@@ -64,13 +56,7 @@ export function useCopyToClipboard(): {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-
-      // Clear any existing timeout
-      if (timeoutRef.current !== null) {
-        window.clearTimeout(timeoutRef.current);
-      }
-
-      // Reset after 2 seconds
+      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(() => {
         setCopied(false);
         timeoutRef.current = null;
@@ -80,69 +66,11 @@ export function useCopyToClipboard(): {
     }
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current !== null) {
-        window.clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
     };
   }, []);
 
   return { copied, copy };
-}
-
-/**
- * Hook for debouncing a value
- */
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-/**
- * Hook to persist state to localStorage with SSR safety
- */
-export function useLocalStorage<T>(
-  key: string,
-  initialValue: T
-): [T, (value: T | ((prev: T) => T)) => void] {
-  const [storedValue, setStoredValue] = useState<T>(initialValue);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Load from localStorage after hydration
-  useEffect(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item) {
-        setStoredValue(JSON.parse(item));
-      }
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-    }
-    setIsHydrated(true);
-  }, [key]);
-
-  // Save to localStorage when value changes
-  useEffect(() => {
-    if (!isHydrated) return;
-    try {
-      window.localStorage.setItem(key, JSON.stringify(storedValue));
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
-    }
-  }, [key, storedValue, isHydrated]);
-
-  return [storedValue, setStoredValue];
 }

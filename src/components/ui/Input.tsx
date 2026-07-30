@@ -1,31 +1,40 @@
 "use client";
 
-import { forwardRef, type InputHTMLAttributes } from "react";
+import { forwardRef, useId, type InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
   error?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, ...props }, ref) => {
+  ({ className, label, error, id, ...props }, ref) => {
+    const autoId = useId();
+    const inputId = id ?? autoId;
     return (
       <div className="w-full">
+        {label && (
+          <label htmlFor={inputId} className="mb-1.5 block text-sm text-ink-muted">
+            {label}
+          </label>
+        )}
         <input
           ref={ref}
+          id={inputId}
           className={cn(
-            "w-full px-3 py-2 bg-white/5 border rounded-lg text-white placeholder-white/40",
-            "focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-            error ? "border-red-500/50" : "border-white/10",
-            className
+            "w-full rounded-lg border bg-surface px-3 py-2 text-ink placeholder-ink-faint",
+            "transition-colors focus:ring-2 focus:ring-ember/50 focus:outline-none",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            error ? "border-danger/50" : "border-line-strong focus:border-transparent",
+            className,
           )}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-1 text-sm text-danger">{error}</p>}
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = "Input";

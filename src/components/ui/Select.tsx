@@ -13,11 +13,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       <select
         ref={ref}
         className={cn(
-          "px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white",
-          "focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
-          "[&>option]:bg-zinc-900 [&>option]:text-white",
-          className
+          "rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm text-ink",
+          "focus:ring-2 focus:ring-ember/50 focus:outline-none",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          "[&>option]:bg-surface-2 [&>option]:text-ink",
+          className,
         )}
         {...props}
       >
@@ -28,7 +28,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         ))}
       </select>
     );
-  }
+  },
 );
 
 Select.displayName = "Select";
