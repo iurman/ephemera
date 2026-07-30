@@ -1,188 +1,146 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { createTRPCReact } from "@trpc/react-query";
-import type { AppRouter } from "@/server/trpc/root";
-import { httpBatchLink } from "@trpc/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Button, Input } from "@/components/ui";
-
-const api = createTRPCReact<AppRouter>();
-const queryClient = new QueryClient();
-const trpcClient = api.createClient({
-  links: [
-    httpBatchLink({
-      url: "/api/trpc",
-      fetch: (url, opts) => fetch(url, { ...opts, credentials: "include" }),
-    }),
-  ],
-});
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc";
+import { Button, Input, Skeleton } from "@/components/ui";
 
 export default function SignupPage() {
   return (
-    <api.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <Suspense fallback={<LoadingState />}>
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <div className="bg-surface border-line-strong w-full max-w-md rounded-2xl border p-6 shadow-2xl">
+        <Link href="/" className="mb-6 flex items-center gap-2 font-semibold tracking-tight">
+          <span className="bg-ember animate-ember-pulse block size-2.5 rounded-full" />
+          ephemera
+        </Link>
+        <Suspense fallback={<Skeleton className="h-64" />}>
           <SignupForm />
         </Suspense>
-      </QueryClientProvider>
-    </api.Provider>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="text-white/50">Loading...</div>
-    </div>
+      </div>
+    </main>
   );
 }
 
 function SignupForm() {
+  const trpc = useTRPC();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState<{
-    displayName?: string;
-    password?: string;
-    confirmPassword?: string;
-  }>({});
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
-  const consumeInvite = api.auth.consumeInvite.useMutation({
-    onSuccess: (res) => {
-      if (res.ok) {
+  const consumeInvite = useMutation(
+    trpc.auth.consumeInvite.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries();
         router.replace("/dashboard");
         router.refresh();
-      }
-    },
-  });
-
-  const validate = (): boolean => {
-    const newErrors: typeof errors = {};
-
-    if (!displayName.trim()) {
-      newErrors.displayName = "Display name is required";
-    }
-
-    if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    consumeInvite.mutate({
-      token,
-      displayName: displayName.trim(),
-      email: email.trim() || undefined,
-      password,
-    });
-  };
+      },
+    }),
+  );
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white p-6">
-        <div className="text-center max-w-md">
-          <h1 className="text-xl font-semibold mb-2">Invalid Invite Link</h1>
-          <p className="text-white/50 mb-6">
-            The invite link is missing or invalid. Please use a valid invite URL.
-          </p>
-          <a
-            href="/"
-            className="text-sm text-white/60 hover:text-white transition-colors"
-          >
-            Back to home
-          </a>
-        </div>
+      <div className="text-center">
+        <h1 className="text-xl font-semibold">Invalid invite link</h1>
+        <p className="text-ink-faint mt-2 text-sm">
+          This invite link is missing its token. Ask for a fresh invite.
+        </p>
+        <Link
+          href="/"
+          className="text-ink-muted hover:text-ink mt-6 inline-block text-sm transition-colors"
+        >
+          Back to home
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white p-6">
-      <div className="w-full max-w-md p-6 rounded-2xl border border-white/10 bg-white/[0.02]">
-        <h1 className="text-xl font-semibold">Create Account</h1>
-        <p className="text-sm text-white/50 mt-2">
-          Complete your account setup to start using Ephemera.
-        </p>
+    <>
+      <h1 className="text-xl font-semibold">Create your account</h1>
+      <p className="text-ink-faint mt-1 text-sm">
+        You&apos;ve been invited to this ephemera instance.
+      </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <Input
-            placeholder="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            error={errors.displayName}
-            autoFocus
-            autoComplete="name"
-          />
+      <form
+        className="mt-6 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (password !== confirmPassword) {
+            setConfirmError("Passwords do not match");
+            return;
+          }
+          setConfirmError(null);
+          consumeInvite.mutate({
+            token,
+            displayName: displayName.trim(),
+            email: email.trim(),
+            password,
+          });
+        }}
+      >
+        <Input
+          label="Display name"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          autoComplete="name"
+          autoFocus
+          required
+        />
+        <Input
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
+        />
+        <Input
+          type="password"
+          label="Password (min 8 characters)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          required
+        />
+        <Input
+          type="password"
+          label="Confirm password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          error={confirmError ?? undefined}
+          autoComplete="new-password"
+          required
+        />
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full"
+          loading={consumeInvite.isPending}
+          disabled={!displayName.trim() || !email.trim() || password.length < 8}
+        >
+          Create account
+        </Button>
+      </form>
 
-          <Input
-            type="email"
-            placeholder="Email (optional)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-          />
+      {consumeInvite.isError && (
+        <p className="text-danger mt-4 text-sm">{consumeInvite.error.message}</p>
+      )}
 
-          <Input
-            type="password"
-            placeholder="Password (min 6 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-            autoComplete="new-password"
-          />
-
-          <Input
-            type="password"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            error={errors.confirmPassword}
-            autoComplete="new-password"
-          />
-
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            loading={consumeInvite.isPending}
-            disabled={!displayName.trim() || password.length < 6}
-          >
-            Create Account
-          </Button>
-        </form>
-
-        {consumeInvite.isError && (
-          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-            <p className="text-sm text-red-400">
-              {consumeInvite.error.message || "Failed to create account"}
-            </p>
-          </div>
-        )}
-
-        <p className="mt-6 text-xs text-center text-white/40">
-          Already have an account?{" "}
-          <a href="/dashboard" className="hover:text-white/60">
-            Sign in
-          </a>
-        </p>
-      </div>
-    </div>
+      <p className="text-ink-faint mt-6 text-center text-xs">
+        Already have an account?{" "}
+        <Link href="/login" className="hover:text-ink-muted underline">
+          Log in
+        </Link>
+      </p>
+    </>
   );
 }

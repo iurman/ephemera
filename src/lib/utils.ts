@@ -1,8 +1,6 @@
 import type { DropStatus } from "./types";
 
-/**
- * Format time remaining in a human-readable way
- */
+/** Format time remaining in a human-readable way. */
 export function formatTimeLeft(totalSeconds: number): string {
   if (totalSeconds <= 0) return "0s";
 
@@ -18,26 +16,26 @@ export function formatTimeLeft(totalSeconds: number): string {
   return `${seconds}s`;
 }
 
-/**
- * Format a duration in milliseconds
- */
+/** Format a duration in milliseconds. */
 export function formatDuration(ms: number): string {
   if (ms <= 0) return "0s";
-  const seconds = Math.round(ms / 1000);
-  return formatTimeLeft(seconds);
+  return formatTimeLeft(Math.round(ms / 1000));
 }
 
-/**
- * Format how long ago something happened
- */
+/** Format how long ago something happened. */
 export function formatSince(date: Date, nowMs: number): string {
   const diff = Math.max(0, nowMs - date.getTime());
   return formatDuration(diff) + " ago";
 }
 
-/**
- * Compute the status of a drop
- */
+/** Human-readable byte size. */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/** Compute the lifecycle status of a drop. */
 export function computeDropStatus({
   revokedAt,
   expiresAt,
@@ -57,9 +55,6 @@ export function computeDropStatus({
   return "active";
 }
 
-/**
- * Get the display label for a status
- */
 export function getStatusLabel(status: DropStatus): string {
   const labels: Record<DropStatus, string> = {
     active: "Active",
@@ -70,49 +65,13 @@ export function getStatusLabel(status: DropStatus): string {
   return labels[status];
 }
 
-/**
- * Get status colors for styling
- */
-export function getStatusColors(status: DropStatus): { bg: string; text: string } {
-  const colors: Record<DropStatus, { bg: string; text: string }> = {
-    active: { bg: "bg-emerald-500/20", text: "text-emerald-400" },
-    expired: { bg: "bg-zinc-500/20", text: "text-zinc-400" },
-    exhausted: { bg: "bg-amber-500/20", text: "text-amber-400" },
-    revoked: { bg: "bg-red-500/20", text: "text-red-400" },
-  };
-  return colors[status];
-}
-
-/**
- * Escape HTML for safe rendering
- */
-export function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/**
- * Convert plain text to HTML with line breaks
- */
-export function textToHtml(str: string): string {
-  return escapeHtml(str).replace(/\n/g, "<br/>");
-}
-
-/**
- * Truncate text with ellipsis
- */
+/** Truncate text with ellipsis. */
 export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - 1) + "…";
 }
 
-/**
- * Validate URL format
- */
+/** Validate URL format (http/https only). */
 export function isValidUrl(str: string): boolean {
   try {
     const url = new URL(str);
@@ -122,9 +81,7 @@ export function isValidUrl(str: string): boolean {
   }
 }
 
-/**
- * Generate a URL for a drop
- */
+/** Absolute URL for a drop (without key fragment). */
 export function getDropUrl(token: string): string {
   if (typeof window !== "undefined") {
     return `${window.location.origin}/d/${token}`;
@@ -132,9 +89,18 @@ export function getDropUrl(token: string): string {
   return `/d/${token}`;
 }
 
-/**
- * Classnames utility (simplified version of clsx)
- */
+/** Compact user-agent summary for the views table. */
+export function summarizeUserAgent(ua: string | null): string {
+  if (!ua) return "Unknown";
+  if (/bot|crawl|spider|preview|fetch|curl|wget/i.test(ua)) return "Bot / preview";
+  const browser = ua.match(/(Firefox|Edg|OPR|Chrome|Safari)\/[\d.]+/)?.[1] ?? "Browser";
+  const os = ua.match(/\((Windows|Macintosh|X11; Linux|Android|iPhone|iPad)/)?.[1] ?? "";
+  const browserName = browser === "Edg" ? "Edge" : browser === "OPR" ? "Opera" : browser;
+  const osName = os === "X11; Linux" ? "Linux" : os === "Macintosh" ? "macOS" : os;
+  return osName ? `${browserName} · ${osName}` : browserName;
+}
+
+/** Classnames utility (simplified clsx). */
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
   return classes.filter(Boolean).join(" ");
 }
