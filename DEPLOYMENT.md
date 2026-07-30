@@ -1,176 +1,58 @@
 # Deploying Ephemera
 
-This guide covers deploying Ephemera using Docker, with specific instructions for Coolify.
+Ephemera ships as a single Docker image (Next.js standalone, Node 22) plus PostgreSQL 16. Migrations run automatically at container start.
 
-## Docker Compose Files
+## Compose files
 
-| File                            | Purpose                                                |
-| ------------------------------- | ------------------------------------------------------ |
-| `docker-compose.yml`            | Production config for Coolify/PaaS (external database) |
-| `docker-compose.override.yml`   | Local development overrides (auto-merged)              |
-| `docker-compose.production.yml` | Self-hosted with bundled PostgreSQL                    |
+| File                          | Purpose                                                    |
+| ----------------------------- | ---------------------------------------------------------- |
+| `docker-compose.yml`          | Full stack (app + Postgres) for Coolify/production         |
+| `docker-compose.override.yml` | Local-only overrides, auto-merged by `docker compose up`   |
+| `docker-compose.dev.yml`      | Dev database only (`npm run dev` runs the app on the host) |
 
-## Quick Start
+## Coolify
 
-### Local Development
+1. Create a **Docker Compose** service and connect this repository (default compose file).
+2. Set `POSTGRES_PASSWORD` in the environment.
+3. Deploy. The `app` service carries Traefik labels for `ephemera.isaacurman.com` (edit the labels in `docker-compose.yml` for your domain), joins the `coolify` network, and health-checks `/api/ping`.
 
-```bash
-# Start app + local database (uses override file automatically)
-docker compose up
+On first boot the entrypoint runs `scripts/migrate.mjs`:
 
-# App available at http://localhost:3005
-```
+- **Fresh database** → all migrations apply from scratch.
+- **Existing pre-migration database** (originally deployed with `drizzle-kit push`) → the runner detects tables without migration history, stamps the baseline as applied, then applies only the newer migrations. No manual intervention, no data loss.
+- **Already migrated** → no-op.
 
-### Production with External Database
+## Environment variables
 
-```bash
-# Set your database URL
-export DATABASE_URL=postgres://user:pass@host:5432/dbname
+| Variable                        | Required        | Default                            | Description                                   |
+| ------------------------------- | --------------- | ---------------------------------- | --------------------------------------------- |
+| `DATABASE_URL`                  | app-only setups | built from `POSTGRES_*` in compose | PostgreSQL connection string                  |
+| `POSTGRES_PASSWORD`             | compose stack   | —                                  | Database password                             |
+| `POSTGRES_USER` / `POSTGRES_DB` | no              | `ephemera`                         | Database identity                             |
+| `HOST_PORT`                     | no              | `3000`                             | Published app port                            |
+| `RETENTION_DAYS`                | no              | `3`                                | Days before dead drops' ciphertext is blanked |
+| `VIEWS_RETENTION_DAYS`          | no              | `30`                               | Days of view-log retention                    |
+| `PURGE_INTERVAL_MIN`            | no              | `60`                               | Minutes between retention sweeps              |
+| `SKIP_MIGRATIONS`               | no              | `false`                            | Skip migrations at startup                    |
 
-# Start the app only
-docker compose up -d
-```
+## Health checks
 
-### Self-Hosted with Bundled PostgreSQL
+- `/api/ping` — liveness (static 200, used by Docker/Traefik)
+- `/api/health` — readiness incl. database connectivity; returns full diagnostics (memory, latency, versions) only to logged-in admins, a bare status to everyone else
 
-```bash
-# Set required password
-export POSTGRES_PASSWORD=your-secure-password
+## First-time setup
 
-# Start the full stack
-docker compose -f docker-compose.production.yml up -d
-```
+Visit `/login` on the deployed instance — with an empty database it becomes the owner-setup form (display name, email, password). After that, mint invite links from the dashboard to add users.
 
-## Deploying to Coolify
+## Upgrading from the pre-v2 deployment
 
-### Option 1: Using Coolify's Built-in PostgreSQL (Recommended)
+Nothing special: push/deploy. The migration runner baselines the legacy schema automatically (see above). Two behavioral notes:
 
-1. **Create a new Service** in Coolify
-2. **Select "Docker Compose"** as the deployment method
-3. **Connect your Git repository**
-4. **Leave compose file as default** (`docker-compose.yml`)
-5. **Add a PostgreSQL database** from Coolify's database section
-6. **Configure Environment Variables**:
-   - `DATABASE_URL`: Use the connection string from Coolify's PostgreSQL service
-
-7. **Deploy!**
-
-### Option 2: All-in-One Stack (Bundled Database)
-
-1. **Create a new Service** in Coolify
-2. **Select "Docker Compose"** as the deployment method
-3. **Connect your Git repository**
-4. **Set the compose file** to `docker-compose.production.yml`
-5. **Configure Environment Variables**:
-   - `POSTGRES_PASSWORD`: A secure password for the database
-   - `POSTGRES_USER`: (optional, default: `ephemera`)
-   - `POSTGRES_DB`: (optional, default: `ephemera`)
-
-6. **Deploy!**
-
-### Option 3: Dockerfile Only
-
-1. **Create a new Service** in Coolify
-2. **Select "Dockerfile"** as the deployment method
-3. **Connect your Git repository**
-4. **Configure Environment Variables**:
-   - `DATABASE_URL`: Your PostgreSQL connection string
-
-5. **Deploy!**
-
-## Environment Variables
-
-| Variable          | Required | Default      | Description                         |
-| ----------------- | -------- | ------------ | ----------------------------------- |
-| `DATABASE_URL`    | Yes      | -            | PostgreSQL connection string        |
-| `NODE_ENV`        | No       | `production` | Environment mode                    |
-| `HOST_PORT`       | No       | `3000`       | External port to expose             |
-| `SKIP_MIGRATIONS` | No       | `false`      | Skip database migrations on startup |
-
-### Development Only
-
-| Variable         | Description                                      |
-| ---------------- | ------------------------------------------------ |
-| `DEV_ADMIN_USER` | Username for /dev-login (disabled in production) |
-| `DEV_ADMIN_PASS` | Password for /dev-login (disabled in production) |
-
-## Health Checks
-
-The application exposes a health check endpoint at `/api/ping` which returns a 200 OK when healthy.
-
-## First-Time Setup
-
-After deployment:
-
-1. Visit your app's URL
-2. Navigate to `/dashboard`
-3. Create the initial owner account when prompted
-4. Generate invite links to add more users
-
-## Database Migrations
-
-Migrations run automatically on startup via the entrypoint script. To skip migrations:
-
-```bash
-SKIP_MIGRATIONS=true
-```
+- Legacy drops were stored as plaintext (`enc_version = 0`); they keep working and render through the same reveal flow. New drops are E2E encrypted.
+- `/dev-login` and the `DEV_ADMIN_*` variables are gone. If the legacy owner account has no password, log in is impossible for it — create your account via the invite flow from a new owner, or set a password directly in SQL (`users.password_hash` uses `salt:hex(scrypt64)`).
 
 ## Troubleshooting
 
-### Container won't start
-
-1. Check logs: `docker compose logs app`
-2. Verify `DATABASE_URL` is correct
-3. Ensure PostgreSQL is running and accessible
-
-### Migration errors
-
-1. Check database connectivity
-2. Ensure the database user has CREATE/ALTER permissions
-3. Try running migrations manually:
-   ```bash
-   docker compose exec app npx drizzle-kit push --force
-   ```
-
-### Health check failing
-
-1. Wait for the start period (40s)
-2. Check application logs for errors
-3. Verify the `/api/ping` endpoint is accessible
-
-### 404 Error on Deployment
-
-If you see a 404 error after deploying to Coolify:
-
-1. Ensure you're using the default `docker-compose.yml` file
-2. Verify `DATABASE_URL` is set correctly in Coolify's environment variables
-3. Check that the database is accessible from the app container
-4. Review logs: `docker compose logs app`
-
-## Building Locally
-
-```bash
-# Build the Docker image
-docker build -t ephemera .
-
-# Run with external database
-docker run -p 3000:3000 -e DATABASE_URL=postgres://... ephemera
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│                   Coolify                    │
-├─────────────────────────────────────────────┤
-│  ┌─────────────┐      ┌─────────────────┐   │
-│  │   Ephemera  │─────▶│   PostgreSQL    │   │
-│  │   (Next.js) │      │   (Database)    │   │
-│  └─────────────┘      └─────────────────┘   │
-│         │                                    │
-│         ▼                                    │
-│  ┌─────────────┐                            │
-│  │   Traefik   │  (Coolify's reverse proxy) │
-│  └─────────────┘                            │
-└─────────────────────────────────────────────┘
-```
+- **Container restarts on boot** — check `docker compose logs app`; almost always `DATABASE_URL`/credentials. The migrator retries the connection for 60s before giving up.
+- **Migration failure** — the runner applies each release's migrations in one transaction; a failure rolls back cleanly. Fix the cause and redeploy.
+- **Health check failing** — `/api/health` returns 503 when the database is unreachable.

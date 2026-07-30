@@ -124,7 +124,10 @@ await page.getByText("Views per minute").waitFor();
 await shot("drop-detail");
 
 // Reveal gate + revealed content (recipient's perspective)
-const recipCtx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 2 });
+const recipCtx = await browser.newContext({
+  viewport: { width: 1200, height: 800 },
+  deviceScaleFactor: 2,
+});
 const recip = await recipCtx.newPage();
 await recip.goto(runbook.shareUrl);
 await recip.getByRole("heading", { name: "A secret awaits" }).waitFor();

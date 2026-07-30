@@ -147,7 +147,9 @@ async function main() {
   try {
     await stampBaselineIfNeeded(pool, migrations);
     await applyMigrations(pool, migrations);
-    const { rows } = await pool.query(`SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations`);
+    const { rows } = await pool.query(
+      `SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations`,
+    );
     log(`up to date (${rows[0].n} migrations applied)`);
   } finally {
     await pool.end();
